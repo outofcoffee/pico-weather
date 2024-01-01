@@ -2,7 +2,7 @@ import utime
 
 
 def format_date(dt: int) -> str:
-    """Converts a unix timestamp to a string like "1 Jan\""""
+    """Converts a unix timestamp to a string like "1 Jan 12:34\""""
 
     dtup = utime.localtime(dt)
     formatted: str
@@ -33,4 +33,4 @@ def format_date(dt: int) -> str:
     else:
         formatted = "???"
 
-    return f"{dtup[2]} {formatted}"
+    return f"{dtup[2]} {formatted} {dtup[3]:02d}:{dtup[4]:02d}"
