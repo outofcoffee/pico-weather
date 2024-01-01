@@ -2,3 +2,4 @@
 *.iml
 venv
 *.uf2
+/config.txt

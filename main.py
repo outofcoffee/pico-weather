@@ -86,8 +86,25 @@ DC_PIN = 8
 CS_PIN = 9
 BUSY_PIN = 13
 
-ssid = ''
-password = ''
+def read_config():
+    """Reads the configuration file and returns a tuple of (ssid, password, lat, lon, openweathermap_key)"""
+
+    global ssid, password, lat, lon, openweathermap_key
+    with open('config.txt') as f:
+        for line in f:
+            if line.startswith('ssid='):
+                ssid = line[5:].strip()
+            elif line.startswith('password='):
+                password = line[9:].strip()
+            elif line.startswith('lat='):
+                lat = line[4:].strip()
+            elif line.startswith('lon='):
+                lon = line[4:].strip()
+            elif line.startswith('openweathermap_key='):
+                openweathermap_key = line[19:].strip()
+
+    return ssid, password, lat, lon, openweathermap_key
+
 
 class EPD_2in13_V3_Portrait(framebuf.FrameBuffer):
     def __init__(self):
@@ -697,6 +714,8 @@ def display_info(line1: str, line2: str, line3: str, line4: str):
 
 
 if __name__ == '__main__':
+    ssid, password, lat, lon, openweathermap_key = read_config()
+
     epd = EPD_2in13_V3_Landscape()
     epd.Clear()
 
