@@ -128,6 +128,7 @@ def connect_and_fetch():
 
     print(f"connecting to {ssid}...")
 
+    epd.init()
     epd.Clear()
     display_info(False, f"Connecting to {ssid}...")
 
@@ -146,7 +147,10 @@ def connect_and_fetch():
 
     weather_date = format_date(weather[0])
     display_info(False, f"Weather {weather_date}", weather[1], weather[2], weather[3])
+
     # display_additional()
+    epd.delay_ms(2000)
+    epd.sleep()
 
 
 if __name__ == '__main__':
