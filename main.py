@@ -9,10 +9,10 @@ from utils import format_date
 last_text_y = 0
 
 
-def read_config():
-    """Reads the configuration file and returns a tuple of (ssid, password, lat, lon, openweathermap_key)"""
+def read_config() -> tuple[str, str, str, str, str, int]:
+    """Reads the configuration file and returns a tuple of (ssid, password, lat, lon, openweathermap_key, sleep_mins)"""
 
-    global ssid, password, lat, lon, openweathermap_key
+    global ssid, password, lat, lon, openweathermap_key, sleep_mins
     with open('config.txt') as f:
         for line in f:
             if line.startswith('ssid='):
@@ -25,8 +25,10 @@ def read_config():
                 lon = line[4:].strip()
             elif line.startswith('openweathermap_key='):
                 openweathermap_key = line[19:].strip()
+            elif line.startswith('sleep_mins='):
+                sleep_mins = int(line[11:].strip())
 
-    return ssid, password, lat, lon, openweathermap_key
+    return ssid, password, lat, lon, openweathermap_key, sleep_mins
 
 
 def connect_to_network() -> str:
@@ -121,12 +123,12 @@ def display_additional():
     epd.sleep()
 
 
-if __name__ == '__main__':
-    ssid, password, lat, lon, openweathermap_key = read_config()
+def connect_and_fetch():
+    """Connects to the configured network and fetches the current weather."""
 
-    epd = EPD_2in13_V3_Landscape()
+    print(f"connecting to {ssid}...")
+
     epd.Clear()
-
     display_info(False, f"Connecting to {ssid}...")
 
     try:
@@ -134,7 +136,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('received keyboard interrupt when connecting to network')
         machine.reset()
-
     display_info(True, "Connected", f"IP: {ip}")
 
     try:
@@ -145,5 +146,14 @@ if __name__ == '__main__':
 
     weather_date = format_date(weather[0])
     display_info(False, f"Weather {weather_date}", weather[1], weather[2], weather[3])
-
     # display_additional()
+
+
+if __name__ == '__main__':
+    ssid, password, lat, lon, openweathermap_key, sleep_mins = read_config()
+    epd = EPD_2in13_V3_Landscape()
+
+    while True:
+        connect_and_fetch()
+        print(f'sleeping for {sleep_mins} minutes')
+        utime.sleep(sleep_mins * 60)
