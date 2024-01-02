@@ -32,8 +32,8 @@ def read_config() -> tuple[str, str, str, str, str, int]:
     return ssid, password, lat, lon, openweathermap_key, sleep_mins
 
 
-def connect_to_network() -> str:
-    """Connects to the configured network and returns the IP address."""
+def connect_to_network() -> tuple[network.WLAN, str]:
+    """Connects to the configured network and returns the WLAN client and IP address."""
 
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -46,7 +46,7 @@ def connect_to_network() -> str:
 
     ip_addr = ifconfig[0]
     print(f'Connected on {ip_addr}')
-    return ip_addr
+    return wlan, ip_addr
 
 
 def display_info(append: bool, *lines: str):
@@ -166,7 +166,7 @@ def connect_and_fetch():
     display_info(False, f"Connecting to {ssid}...")
 
     try:
-        ip = connect_to_network()
+        wlan, ip = connect_to_network()
     except KeyboardInterrupt:
         print('received keyboard interrupt when connecting to network')
         machine.reset()
@@ -196,6 +196,10 @@ def connect_and_fetch():
     # display_additional()
     epd.delay_ms(2000)
     epd.sleep()
+
+    print('disconnecting from network')
+    wlan.disconnect()
+    wlan.active(False)
 
 
 if __name__ == '__main__':
