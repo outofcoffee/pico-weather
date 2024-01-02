@@ -1,4 +1,6 @@
 import utime
+import sys
+import os
 
 
 def format_date(dt: int) -> str:

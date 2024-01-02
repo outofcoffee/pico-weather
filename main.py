@@ -2,6 +2,7 @@ import machine
 import utime
 import network
 import urequests as requests
+import framebuf
 
 from display import EPD_2in13_V3_Landscape
 from utils import format_date
@@ -61,7 +62,6 @@ def display_info(append: bool, *lines: str):
         epd.text(line, 0, last_text_y, 0x00)
 
     epd.display(epd.buffer)
-    # epd.delay_ms(2000)
 
 
 def fetch_weather() -> tuple[int, str, str, str]:
@@ -123,6 +123,33 @@ def display_additional():
     epd.sleep()
 
 
+def show_image(img_path: str):
+    fb: framebuf.FrameBuffer
+    if img_path == 'cloud':
+        fb = framebuf.FrameBuffer(bytearray(
+            b'\xff\xff\xff\xff\xff\xff\xfe\x0f\xfc\x07\xe0\x07\xc0\x07\x80\x01\x00\x01\x00\x00\x00\x00\x80\x01\xc0\x03\xff\xff\xff\xff\xff\xff'),
+                                  16, 16, framebuf.MONO_HLSB)
+    elif img_path == 'rain':
+        fb = framebuf.FrameBuffer(bytearray(
+            b'\x00\x00\x00\x00\x03\xc0\x0e\x60\x08\x10\x38\x18\x60\x0c\xc0\x06\x80\x03\x81\x81\xc5\x03\x6d\xb6\x04\x24\x0c\x20\x04\x20\x00\x00'),
+                                  16, 16, framebuf.MONO_HLSB)
+
+    elif img_path == 'sun':
+        fb = framebuf.FrameBuffer(bytearray(b'\x01\x80\x00\x80\x20\x04\x12\x88\x07\xe0\x0c\x30\x18\x10\xc8\x1b\x58\x12\x08\x18\x0c\x30\x07\xe0\x11\x08\x20\x0c\x01\x80\x01\x00'), 16, 16, framebuf.MONO_HLSB)
+
+    elif img_path == 'wind':
+        fb = framebuf.FrameBuffer(bytearray(
+            b'\x00\x00\x08\x00\x3e\x18\x02\x74\x02\x46\x5e\x02\x68\x06\x37\x7c\x5a\xd0\x6f\x00\x29\xc0\x00\x40\x00\x60\x07\xc0\x01\x00\x00\x00'),
+                                  16, 16, framebuf.MONO_HLSB)
+
+    else:
+        print(f"unknown image path {img_path}")
+        return
+
+    epd.blit(fb, 0, 60)
+    epd.display(epd.buffer)
+
+
 def connect_and_fetch():
     """Connects to the configured network and fetches the current weather."""
 
@@ -147,6 +174,16 @@ def connect_and_fetch():
 
     weather_date = format_date(weather[0])
     display_info(False, f"Weather {weather_date}", weather[1], weather[2], weather[3])
+
+    # convert weather[2] to image per https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
+    if weather[2] == 'Clouds' or weather[2] == 'Thunderstorm':
+        show_image('cloud')
+    elif weather[2] == 'Rain' or weather[2] == 'Drizzle' or weather[2] == 'Snow':
+        show_image('rain')
+    elif weather[2] == 'Clear':
+        show_image('sun')
+    elif weather[2] == 'Wind':
+        show_image('wind')
 
     # display_additional()
     epd.delay_ms(2000)
