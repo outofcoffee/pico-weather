@@ -3,10 +3,13 @@ from PIL import Image
 
 
 def convert_image_to_mono_bytes(image):
-    # Convert the image to black and white (1-bit pixels) using dithering
-    bw_image = image.convert('1')
+    # Convert the image to black and white (1-bit pixels) using a threshold
+    threshold = 128  # [0, 255], where pixels brighter than this are white (0), else black (1)
+    # Using 'L' mode for grayscale ensures that alpha is not considered in the conversion
+    bw_image = image.convert('L').point(lambda x: 0 if x > threshold else 1, '1')
 
     # Convert the image to a byte array
+    # '1' format for the image means it's stored as 1-bit pixels, exactly what we need for framebuf
     byte_array = bytearray(bw_image.tobytes())
 
     # Since we're using MONO_HLSB, we need to invert the bits

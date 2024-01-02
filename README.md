@@ -19,3 +19,13 @@ Fetches weather data from [OpenWeather](https://openweathermap.org/) and display
 2. Copy `config.example.py` to `config.txt` and fill in the required values.
 3. Copy the `config.txt` file to the Pi Pico.
 4. Copy the Python files in the root directory to the Pi Pico.
+
+Example:
+
+```bash
+$ python3 ./scripts/microupload.py -v /dev/cu.usbmodem14101 config.txt display.py main.py utils.py
+```     
+
+## Images
+
+Weather icons by <a target="_blank" href="https://icons8.com">Icons8</a>.
