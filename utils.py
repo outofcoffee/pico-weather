@@ -38,6 +38,10 @@ def format_date(dt: int) -> str:
     return f"{dtup[2]} {formatted} {dtup[3]:02d}:{dtup[4]:02d}"
 
 
+def wrap_text(text: str, max_width: int) -> list[str]:
+    return [text[idx:idx + max_width] for idx in range(0, len(text), max_width)]
+
+
 def read_config() -> tuple[str, str, str, str, str, int]:
     """Reads the configuration file and returns a tuple of (ssid, password, lat, lon, openweathermap_key, sleep_mins)"""
 

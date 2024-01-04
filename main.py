@@ -5,7 +5,7 @@ import urequests as requests
 
 from display import EPD_2in13_V3_Landscape
 from images import show_image
-from utils import format_date, read_config
+from utils import format_date, read_config, wrap_text
 
 last_text_y = 0
 
@@ -42,10 +42,16 @@ def display_info(append: bool, *lines: str):
     epd.display(epd.buffer)
 
 
-def fetch_weather() -> tuple[int, str, str, str]:
-    """Fetches the current weather from OpenWeatherMap and returns a tuple of (dt, temp, main, description)"""
+def fetch_weather() -> tuple[int, str, str, str, list[str]]:
+    """
+    Fetches the current weather from OpenWeatherMap and returns a tuple of
+    (dt, temp, short, description, list[day_summary])
+    """
 
-    url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={openweathermap_key}"
+    # reduce the amount of data returned by excluding minutely, hourly, and alerts
+    exclude = "minutely,hourly,alerts"
+
+    url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={openweathermap_key}&exclude={exclude}"
     print(f"querying {url}")
     r = requests.get(url)
     resp: dict = r.json()
@@ -53,22 +59,38 @@ def fetch_weather() -> tuple[int, str, str, str]:
     r.close()
 
     current_conditions = resp['current']
+    dt: int = current_conditions['dt']
 
-    dt = current_conditions['dt']
+    (temp, short, description) = summarise_conditions('current', current_conditions)
+
+    daily_conditions = resp['daily']
+    if len(daily_conditions) > 0:
+        day_summary = wrap_text(daily_conditions[0]['summary'], 30)
+    else:
+        print(f"no daily weather returned")
+        day_summary = []
+
+    summary = dt, temp, short, description, day_summary
+    return summary
+
+
+def summarise_conditions(weather_timeframe, conditions):
+    """Summarises the given current conditions and returns a tuple of (temp, short, description)"""
 
     # convert from K to C
-    temp = f"{current_conditions['temp'] - 273.15:.1f}"
-    current_weathers = current_conditions['weather']
+    temp = f"{conditions['temp'] - 273.15:.1f}"
+    weathers = conditions['weather']
+    print(f"{len(weathers)} {weather_timeframe} weather(s): ", weathers)
 
-    summary: tuple[dt, str, str, str]
-    if len(current_weathers) > 0:
-        current_weather = current_weathers[0]
-        summary = dt, f"{temp} C", current_weather['main'], current_weather['description']
+    summary: tuple[str, str, str]
+    if len(weathers) > 0:
+        first_weather = weathers[0]
+        summary = f"{temp} C", first_weather['main'], first_weather['description']
     else:
-        print('no current weather returned')
-        summary = dt, f"{temp} C", "", ""
+        print(f"no {weather_timeframe} weather returned")
+        summary = f"{temp} C", "", ""
 
-    print(summary)
+    print(f"{weather_timeframe}: {summary}")
     return summary
 
 
@@ -124,7 +146,18 @@ def connect_and_fetch():
         machine.reset()
 
     weather_date = format_date(weather[0])
-    display_info(False, f"Weather {weather_date}", weather[1], weather[2], weather[3])
+
+    day_summary = weather[4]
+    day_summary1 = ""
+    day_summary2 = ""
+    if len(day_summary) > 0:
+        day_summary1 = day_summary[0]
+    if len(day_summary) > 1:
+        day_summary2 = day_summary[1]
+        if len(day_summary) > 2:
+            day_summary2 += "..."
+
+    display_info(False, f"Weather {weather_date}", f"{weather[1]} - {weather[2]}", weather[3], day_summary1, day_summary2)
 
     # convert weather[2] to image per https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
     if weather[2] == 'Clouds' or weather[2] == 'Thunderstorm':

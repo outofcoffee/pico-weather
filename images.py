@@ -32,5 +32,5 @@ def show_image(epd: EPD_2in13_V3_Landscape, img_path: str):
         print(f"unknown image path {img_path}")
         return
 
-    epd.blit(fb, 0, 50)
+    epd.blit(fb, 0, 70)
     epd.display(epd.buffer)
