@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEVICE_PORT="/dev/cu.usbmodem14101"
+DEVICE_PORT=$( ls /dev/cu.usbmodem14* )
 
 ROOT_DIR=$(git rev-parse --show-toplevel)
 
