@@ -36,3 +36,25 @@ def format_date(dt: int) -> str:
         formatted = "???"
 
     return f"{dtup[2]} {formatted} {dtup[3]:02d}:{dtup[4]:02d}"
+
+
+def read_config() -> tuple[str, str, str, str, str, int]:
+    """Reads the configuration file and returns a tuple of (ssid, password, lat, lon, openweathermap_key, sleep_mins)"""
+
+    global ssid, password, lat, lon, openweathermap_key, sleep_mins
+    with open('config.txt') as f:
+        for line in f:
+            if line.startswith('ssid='):
+                ssid = line[5:].strip()
+            elif line.startswith('password='):
+                password = line[9:].strip()
+            elif line.startswith('lat='):
+                lat = line[4:].strip()
+            elif line.startswith('lon='):
+                lon = line[4:].strip()
+            elif line.startswith('openweathermap_key='):
+                openweathermap_key = line[19:].strip()
+            elif line.startswith('sleep_mins='):
+                sleep_mins = int(line[11:].strip())
+
+    return ssid, password, lat, lon, openweathermap_key, sleep_mins
