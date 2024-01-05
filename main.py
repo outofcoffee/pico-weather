@@ -4,21 +4,23 @@ import network
 import urequests as requests
 
 from display import EPD_2in13_V3_Landscape
-from images import show_image
-from utils import format_date, read_config, wrap_text
+from images import show_image, IMAGE_DIM
+from utils import format_date, read_config, wrap_text, sentence_join
+
+MAX_TEXT_WIDTH = 30
 
 
 class Weather:
     dt: int
-    temp: str
-    short: str
-    description: list[str]
+    temp: float
+    titles: list[str]
+    description: str
     day_summary: list[str]
 
-    def __init__(self, dt: int, temp: str, short: str, description: list[str], day_summary: list[str]):
+    def __init__(self, dt: int, temp: float, titles: list[str], description: str, day_summary: list[str]):
         self.dt = dt
         self.temp = temp
-        self.short = short
+        self.titles = titles
         self.description = description
         self.day_summary = day_summary
 
@@ -66,11 +68,6 @@ def display_info_at_coordinates(append: bool, x: int, *lines: str):
 def fetch_weather() -> Weather:
     """
     Fetches the current weather from OpenWeatherMap and returns a Weather of
-    (dt, temp, short, description, list[day_summary])
-    """
-    """
-    Fetches the current weather from OpenWeatherMap and returns a tuple of
-    (dt, temp, short, description, list[day_summary])
     """
 
     # reduce the amount of data returned by excluding minutely, hourly, and alerts
@@ -86,48 +83,41 @@ def fetch_weather() -> Weather:
     current_conditions = resp['current']
     dt: int = current_conditions['dt']
 
-    (temp, short, description) = summarise_conditions('current', current_conditions)
+    (temp, titles, description) = summarise_conditions('current', current_conditions)
 
     daily_conditions = resp['daily']
     if len(daily_conditions) > 0:
-        day_summary = wrap_text(daily_conditions[0]['summary'], 30)
+        day_summary = wrap_text(daily_conditions[0]['summary'], MAX_TEXT_WIDTH)
     else:
         print(f"no daily weather returned")
         day_summary = []
 
-    return Weather(dt, temp, short, description, day_summary)
+    return Weather(dt, temp, titles, description, day_summary)
 
 
-def summarise_conditions(weather_timeframe, conditions) -> tuple[str, str, list[str]]:
-    """Summarises the given current conditions and returns a tuple of (temp, short, description)"""
+def summarise_conditions(weather_timeframe, conditions) -> tuple[float, list[str], str]:
+    """Summarises the given current conditions and returns a tuple of (temp, titles, description)"""
 
     # convert from K to C
-    temp = f"{conditions['temp'] - 273.15:.1f}"
+    temp_in_celsius: float = conditions['temp'] - 273.15
+
     weathers = conditions['weather']
     print(f"{len(weathers)} {weather_timeframe} weather(s): ", weathers)
 
-    summary: tuple[str, str, list[str]]
+    summary: tuple[float, list[str], str]
     if len(weathers) > 0:
-        short = ""
-        desc = ""
+        titles: list[str] = []
+        descriptions: list[str] = []
 
         for i, weather in enumerate(weathers):
-            if i > 0:
-                if i < len(weathers) - 1:
-                    short += ', '
-                    desc += ', '
-                else:
-                    short += ' and '
-                    desc += ' and '
+            titles.append(weather['main'])
+            descriptions.append(weather['description'])
 
-            short += weather['main']
-            desc += weather['description']
-
-        summary = f"{temp} C", short, wrap_text(desc, 30)
+        summary = temp_in_celsius, titles, sentence_join(descriptions)
 
     else:
         print(f"no {weather_timeframe} weather returned")
-        summary = f"{temp} C", "", []
+        summary = temp_in_celsius, [], ""
 
     print(f"{weather_timeframe}: {summary}")
     return summary
@@ -196,26 +186,25 @@ def connect_and_fetch():
     )
     add_vertical_space(5)
 
-    image_y = last_text_y + 5
+    image_x = 0
+    image_y = last_text_y + 7
 
-    # convert weather.short to image per https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
-    if weather.short == 'Clouds' or weather.short == 'Thunderstorm':
-        show_image(epd, 'cloud', image_y)
-    elif weather.short == 'Rain' or weather.short == 'Drizzle':
-        show_image(epd, 'rain', image_y)
-    elif weather.short == 'Snow':
-        show_image(epd, 'snow', image_y)
-    elif weather.short == 'Clear':
-        show_image(epd, 'sun', image_y)
-    elif weather.short == 'Wind':
-        show_image(epd, 'wind', image_y)
+    for title in weather.titles:
+        img_path = get_img_for_title(title)
+        if img_path:
+            show_image(epd, img_path, image_x, image_y)
+            image_x += IMAGE_DIM + 4
+
+    temp = f"{weather.temp:.1f} C"
+    title = sentence_join(weather.titles)
+    desc = wrap_text(weather.description, MAX_TEXT_WIDTH)
 
     display_info_at_coordinates(
         True,
         37,
-        weather.temp,
-        weather.short,
-        *weather.description,
+        temp,
+        title,
+        *desc,
     )
 
     add_vertical_space(5)
@@ -231,6 +220,24 @@ def connect_and_fetch():
     print('disconnecting from network')
     wlan.disconnect()
     wlan.active(False)
+
+
+def get_img_for_title(title):
+    # convert title to image per https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
+    if title == 'Clouds' or title == 'Thunderstorm':
+        img_path = 'cloud'
+    elif title == 'Rain' or title == 'Drizzle':
+        img_path = 'rain'
+    elif title == 'Snow':
+        img_path = 'snow'
+    elif title == 'Clear':
+        img_path = 'sun'
+    elif title == 'Wind':
+        img_path = 'wind'
+    else:
+        print(f"unknown weather.title: {title}")
+        img_path = None
+    return img_path
 
 
 if __name__ == '__main__':

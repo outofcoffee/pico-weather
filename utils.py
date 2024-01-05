@@ -62,3 +62,15 @@ def read_config() -> tuple[str, str, str, str, str, int]:
                 sleep_mins = int(line[11:].strip())
 
     return ssid, password, lat, lon, openweathermap_key, sleep_mins
+
+
+def sentence_join(inputs: list[str]) -> str:
+    """Joins the given list of strings into a sentence, using commas and an 'and' as appropriate."""
+    if len(inputs) == 0:
+        return ""
+    elif len(inputs) == 1:
+        return inputs[0]
+    elif len(inputs) == 2:
+        return f"{inputs[0]} and {inputs[1]}"
+    else:
+        return f"{', '.join(inputs[:-1])}, and {inputs[-1]}"
