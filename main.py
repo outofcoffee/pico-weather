@@ -45,6 +45,11 @@ def connect_to_network() -> tuple[network.WLAN, str]:
 
 def display_info(append: bool, *lines: str):
     """Displays the given lines of text on the e-ink display, optionally appending to the existing display."""
+    display_info_at_coordinates(append, 0, *lines)
+
+
+def display_info_at_coordinates(append: bool, x: int, *lines: str):
+    """Displays the given lines of text on the e-ink display, optionally appending to the existing display."""
 
     global last_text_y
     if not append:
@@ -53,7 +58,7 @@ def display_info(append: bool, *lines: str):
 
     for line in lines:
         last_text_y += 10
-        epd.text(line, 0, last_text_y, 0x00)
+        epd.text(line, x, last_text_y, 0x00)
 
     epd.display(epd.buffer)
 
@@ -157,6 +162,11 @@ def display_additional():
     epd.sleep()
 
 
+def add_vertical_space(pixels: int):
+    global last_text_y
+    last_text_y += pixels
+
+
 def connect_and_fetch():
     """Connects to the configured network and fetches the current weather."""
 
@@ -183,13 +193,10 @@ def connect_and_fetch():
     display_info(
         False,
         f"Weather {weather_date}",
-        f"{weather.temp} - {weather.short}",
-        *weather.description,
-        *weather.day_summary
     )
+    add_vertical_space(5)
 
-    # display weather image below the last line of text
-    image_y = last_text_y + 10
+    image_y = last_text_y + 5
 
     # convert weather.short to image per https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
     if weather.short == 'Clouds' or weather.short == 'Thunderstorm':
@@ -202,6 +209,20 @@ def connect_and_fetch():
         show_image(epd, 'sun', image_y)
     elif weather.short == 'Wind':
         show_image(epd, 'wind', image_y)
+
+    display_info_at_coordinates(
+        True,
+        37,
+        weather.temp,
+        weather.short,
+        *weather.description,
+    )
+
+    add_vertical_space(5)
+    display_info(
+        True,
+        *weather.day_summary
+    )
 
     # display_additional()
     epd.delay_ms(2000)
