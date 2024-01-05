@@ -12,10 +12,10 @@ class Weather:
     dt: int
     temp: str
     short: str
-    description: str
+    description: list[str]
     day_summary: list[str]
 
-    def __init__(self, dt: int, temp: str, short: str, description: str, day_summary: list[str]):
+    def __init__(self, dt: int, temp: str, short: str, description: list[str], day_summary: list[str]):
         self.dt = dt
         self.temp = temp
         self.short = short
@@ -93,7 +93,7 @@ def fetch_weather() -> Weather:
     return Weather(dt, temp, short, description, day_summary)
 
 
-def summarise_conditions(weather_timeframe, conditions):
+def summarise_conditions(weather_timeframe, conditions) -> tuple[str, str, list[str]]:
     """Summarises the given current conditions and returns a tuple of (temp, short, description)"""
 
     # convert from K to C
@@ -101,13 +101,28 @@ def summarise_conditions(weather_timeframe, conditions):
     weathers = conditions['weather']
     print(f"{len(weathers)} {weather_timeframe} weather(s): ", weathers)
 
-    summary: tuple[str, str, str]
+    summary: tuple[str, str, list[str]]
     if len(weathers) > 0:
-        first_weather = weathers[0]
-        summary = f"{temp} C", first_weather['main'], first_weather['description']
+        short = ""
+        desc = ""
+
+        for i, weather in enumerate(weathers):
+            if i > 0:
+                if i < len(weathers) - 1:
+                    short += ', '
+                    desc += ', '
+                else:
+                    short += ' and '
+                    desc += ' and '
+
+            short += weather['main']
+            desc += weather['description']
+
+        summary = f"{temp} C", short, wrap_text(desc, 30)
+
     else:
         print(f"no {weather_timeframe} weather returned")
-        summary = f"{temp} C", "", ""
+        summary = f"{temp} C", "", []
 
     print(f"{weather_timeframe}: {summary}")
     return summary
@@ -169,7 +184,7 @@ def connect_and_fetch():
         False,
         f"Weather {weather_date}",
         f"{weather.temp} - {weather.short}",
-        weather.description,
+        *weather.description,
         *weather.day_summary
     )
 
