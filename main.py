@@ -7,6 +7,22 @@ from display import EPD_2in13_V3_Landscape
 from images import show_image
 from utils import format_date, read_config, wrap_text
 
+
+class Weather:
+    dt: int
+    temp: str
+    short: str
+    description: str
+    day_summary: list[str]
+
+    def __init__(self, dt: int, temp: str, short: str, description: str, day_summary: list[str]):
+        self.dt = dt
+        self.temp = temp
+        self.short = short
+        self.description = description
+        self.day_summary = day_summary
+
+
 last_text_y = 0
 
 
@@ -42,7 +58,11 @@ def display_info(append: bool, *lines: str):
     epd.display(epd.buffer)
 
 
-def fetch_weather() -> tuple[int, str, str, str, list[str]]:
+def fetch_weather() -> Weather:
+    """
+    Fetches the current weather from OpenWeatherMap and returns a Weather of
+    (dt, temp, short, description, list[day_summary])
+    """
     """
     Fetches the current weather from OpenWeatherMap and returns a tuple of
     (dt, temp, short, description, list[day_summary])
@@ -70,8 +90,7 @@ def fetch_weather() -> tuple[int, str, str, str, list[str]]:
         print(f"no daily weather returned")
         day_summary = []
 
-    summary = dt, temp, short, description, day_summary
-    return summary
+    return Weather(dt, temp, short, description, day_summary)
 
 
 def summarise_conditions(weather_timeframe, conditions):
@@ -145,31 +164,29 @@ def connect_and_fetch():
         print('received keyboard interrupt when fetching weather')
         machine.reset()
 
-    weather_date = format_date(weather[0])
+    weather_date = format_date(weather.dt)
+    display_info(
+        False,
+        f"Weather {weather_date}",
+        f"{weather.temp} - {weather.short}",
+        weather.description,
+        *weather.day_summary
+    )
 
-    day_summary = weather[4]
-    day_summary1 = ""
-    day_summary2 = ""
-    if len(day_summary) > 0:
-        day_summary1 = day_summary[0]
-    if len(day_summary) > 1:
-        day_summary2 = day_summary[1]
-        if len(day_summary) > 2:
-            day_summary2 += "..."
+    # display weather image below the last line of text
+    image_y = last_text_y + 10
 
-    display_info(False, f"Weather {weather_date}", f"{weather[1]} - {weather[2]}", weather[3], day_summary1, day_summary2)
-
-    # convert weather[2] to image per https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
-    if weather[2] == 'Clouds' or weather[2] == 'Thunderstorm':
-        show_image(epd, 'cloud')
-    elif weather[2] == 'Rain' or weather[2] == 'Drizzle':
-        show_image(epd, 'rain')
-    elif weather[2] == 'Snow':
-        show_image(epd, 'snow')
-    elif weather[2] == 'Clear':
-        show_image(epd, 'sun')
-    elif weather[2] == 'Wind':
-        show_image(epd, 'wind')
+    # convert weather.short to image per https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
+    if weather.short == 'Clouds' or weather.short == 'Thunderstorm':
+        show_image(epd, 'cloud', image_y)
+    elif weather.short == 'Rain' or weather.short == 'Drizzle':
+        show_image(epd, 'rain', image_y)
+    elif weather.short == 'Snow':
+        show_image(epd, 'snow', image_y)
+    elif weather.short == 'Clear':
+        show_image(epd, 'sun', image_y)
+    elif weather.short == 'Wind':
+        show_image(epd, 'wind', image_y)
 
     # display_additional()
     epd.delay_ms(2000)
