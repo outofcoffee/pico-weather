@@ -26,8 +26,10 @@ def get_img_for_title(title: str) -> str:
     :return: the image path
     """
     # convert title to image per https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
-    if title == 'Clouds' or title == 'Mist':
+    if title == 'Clouds':
         img_path = 'cloud'
+    elif title == 'Mist' or title == 'Smoke' or title == 'Haze' or title == 'Dust' or title == 'Fog' or title == 'Sand' or title == 'Dust' or title == 'Ash' or title == 'Squall' or title == 'Tornado':
+        img_path = 'fog'
     elif title == 'Rain' or title == 'Drizzle':
         img_path = 'rain'
     elif title == 'Thunderstorm':
@@ -36,8 +38,6 @@ def get_img_for_title(title: str) -> str:
         img_path = 'snow'
     elif title == 'Clear':
         img_path = 'sun'
-    elif title == 'Wind':
-        img_path = 'wind'
     else:
         print(f"unknown weather.title: {title}")
         img_path = None
