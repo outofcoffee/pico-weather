@@ -4,6 +4,13 @@ MAX_TEXT_WIDTH = 30
 last_text_y = 0
 
 
+def get_last_text_y() -> int:
+    """
+    Returns the most recent Y value for rendered text
+    """
+    return last_text_y
+
+
 def display_info(epd: EPD_2in13_V3_Landscape, append: bool, *lines: str):
     """
     Displays the given lines of text on the e-ink display, optionally appending to the existing display.

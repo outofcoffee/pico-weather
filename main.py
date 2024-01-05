@@ -4,7 +4,8 @@ import network
 
 from display import EPD_2in13_V3_Landscape
 from images import show_image, IMAGE_DIM
-from render import MAX_TEXT_WIDTH, last_text_y, display_info, display_info_at_coordinates, add_vertical_space
+from render import MAX_TEXT_WIDTH, display_info, display_info_at_coordinates, add_vertical_space, \
+    get_last_text_y
 from utils import format_date, read_config, wrap_text, sentence_join, Config
 from weather import get_img_for_title, fetch_weather
 
@@ -81,7 +82,7 @@ def connect_and_fetch(config: Config, epd: EPD_2in13_V3_Landscape):
     add_vertical_space(5)
 
     image_x = 0
-    image_y = last_text_y + 7
+    image_y = get_last_text_y() + 7
 
     for title in weather.titles:
         img_path = get_img_for_title(title)
