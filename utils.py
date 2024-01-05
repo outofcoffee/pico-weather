@@ -1,11 +1,21 @@
 import utime
-import sys
-import os
+
+
+class Config:
+    ssid: str
+    password: str
+    lat: str
+    lon: str
+    openweathermap_key: str
+    sleep_mins: int
 
 
 def format_date(dt: int) -> str:
-    """Converts a unix timestamp to a string like "1 Jan 12:34\""""
-
+    """
+    Converts a unix timestamp to a string like "1 Jan 12:34\"
+    :param dt: the unix timestamp
+    :return: the formatted string
+    """
     dtup = utime.localtime(dt)
     formatted: str
     if dtup[1] == 1:
@@ -42,30 +52,37 @@ def wrap_text(text: str, max_width: int) -> list[str]:
     return [text[idx:idx + max_width] for idx in range(0, len(text), max_width)]
 
 
-def read_config() -> tuple[str, str, str, str, str, int]:
-    """Reads the configuration file and returns a tuple of (ssid, password, lat, lon, openweathermap_key, sleep_mins)"""
+def read_config() -> Config:
+    """
+    Reads the configuration file and returns a Config object
+    :return: the configuration
+    """
+    config = Config()
 
-    global ssid, password, lat, lon, openweathermap_key, sleep_mins
     with open('config.txt') as f:
         for line in f:
             if line.startswith('ssid='):
-                ssid = line[5:].strip()
+                config.ssid = line[5:].strip()
             elif line.startswith('password='):
-                password = line[9:].strip()
+                config.password = line[9:].strip()
             elif line.startswith('lat='):
-                lat = line[4:].strip()
+                config.lat = line[4:].strip()
             elif line.startswith('lon='):
-                lon = line[4:].strip()
+                config.lon = line[4:].strip()
             elif line.startswith('openweathermap_key='):
-                openweathermap_key = line[19:].strip()
+                config.openweathermap_key = line[19:].strip()
             elif line.startswith('sleep_mins='):
-                sleep_mins = int(line[11:].strip())
+                config.sleep_mins = int(line[11:].strip())
 
-    return ssid, password, lat, lon, openweathermap_key, sleep_mins
+    return config
 
 
 def sentence_join(inputs: list[str]) -> str:
-    """Joins the given list of strings into a sentence, using commas and an 'and' as appropriate."""
+    """
+    Joins the given list of strings into a sentence, using commas and an 'and' as appropriate
+    :param inputs: the list of strings
+    :return: the sentence
+    """
     if len(inputs) == 0:
         return ""
     elif len(inputs) == 1:
