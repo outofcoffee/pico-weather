@@ -116,10 +116,12 @@ def render_weather(epd: EPD_2in13_V3_Landscape, weather: Weather):
     temp = f"{weather.temp:.1f} C"
     title = sentence_join(weather.titles)
     desc = wrap_text(weather.description, MAX_TEXT_WIDTH)
+
+    # render to the right of the image (image_x)
     display_text_at_coordinates(
         epd,
         RENDER_FLAG_APPEND_ONLY,
-        37,
+        image_x,
         temp,
         title,
         *desc,
