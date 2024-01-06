@@ -91,3 +91,16 @@ def sentence_join(inputs: list[str]) -> str:
         return f"{inputs[0]} and {inputs[1]}"
     else:
         return f"{', '.join(inputs[:-1])}, and {inputs[-1]}"
+
+
+def ensure_suffix(to_check: str, suffix: str) -> str:
+    """
+    Ensures that the input ends with the given suffix.
+    :param to_check: the string to check
+    :param suffix: the suffix
+    :return: the suffixed string
+    """
+    if to_check[-1] == suffix:
+        return to_check
+    else:
+        return to_check + suffix

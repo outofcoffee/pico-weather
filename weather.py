@@ -1,7 +1,7 @@
 import urequests as requests
 
 from render import MAX_TEXT_WIDTH
-from utils import wrap_text, sentence_join
+from utils import wrap_text, sentence_join, ensure_suffix
 
 
 class Weather:
@@ -70,7 +70,8 @@ def fetch_weather(lat: str, lon: str, openweathermap_key: str) -> Weather:
 
     daily_conditions = resp['daily']
     if len(daily_conditions) > 0:
-        day_summary = wrap_text(daily_conditions[0]['summary'], MAX_TEXT_WIDTH)
+        first_summary = ensure_suffix(daily_conditions[0]['summary'], ".")
+        day_summary = wrap_text(first_summary, MAX_TEXT_WIDTH)
     else:
         print(f"no daily weather returned")
         day_summary = []
