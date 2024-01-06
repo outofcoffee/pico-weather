@@ -24,7 +24,26 @@ Example:
 
 ```bash
 $ python3 ./scripts/microupload.py -v /dev/cu.usbmodem14101 config.txt display.py main.py utils.py
-```     
+```
+
+## Running a REPL session
+
+Install `mpremote` - MicroPython Remote Control:
+
+```
+pip install mpremote
+```
+
+Then to open a REPL session:
+
+```
+mpremote
+```
+
+To exit:
+```
+Ctrl-]
+```
 
 ## Images
 
