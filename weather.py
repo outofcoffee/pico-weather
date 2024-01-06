@@ -45,13 +45,14 @@ def get_img_for_title(title: str) -> str:
     return img_path
 
 
-def fetch_weather(lat: str, lon: str, openweathermap_key: str) -> Weather:
+def fetch_weather(lat: str, lon: str, openweathermap_key: str) -> tuple[Weather, Weather]:
     """
-    Fetches the current weather from OpenWeatherMap and returns a Weather object
+    Fetches the current weather from OpenWeatherMap and returns a tuple
+    of Weather objects [current, daily]
     :param lat: the latitude
     :param lon: the longitude
     :param openweathermap_key: the OpenWeatherMap API key
-    :return: the Weather object
+    :return: the Weather objects
     """
     # reduce the amount of data returned by excluding minutely, hourly, and alerts
     exclude = "minutely,hourly,alerts"
@@ -66,17 +67,24 @@ def fetch_weather(lat: str, lon: str, openweathermap_key: str) -> Weather:
     current_conditions = resp['current']
     dt: int = current_conditions['dt']
 
-    (temp, titles, description) = summarise_conditions('current', current_conditions)
+    (current_temp, current_titles, current_desc) = summarise_conditions('current', current_conditions)
+    current = Weather(dt, current_temp, current_titles, current_desc, [])
 
+    # multiple daily forecasts
     daily_conditions = resp['daily']
     if len(daily_conditions) > 0:
-        first_summary = ensure_suffix(daily_conditions[0]['summary'], ".")
-        day_summary = wrap_text(first_summary, MAX_TEXT_WIDTH)
+        today_conditions = daily_conditions[0]
+        (daily_temp, daily_titles, daily_desc) = summarise_conditions('daily', today_conditions)
+
+        today_summary = ensure_suffix(today_conditions['summary'], ".")
+        day_summary = wrap_text(today_summary, MAX_TEXT_WIDTH)
+        daily = Weather(dt, daily_temp, daily_titles, daily_desc, day_summary)
+
     else:
         print(f"no daily weather returned")
-        day_summary = []
+        daily = Weather(dt, 0, [], "", [])
 
-    return Weather(dt, temp, titles, description, day_summary)
+    return current, daily
 
 
 def summarise_conditions(weather_timeframe, conditions) -> tuple[float, list[str], str]:
@@ -86,8 +94,13 @@ def summarise_conditions(weather_timeframe, conditions) -> tuple[float, list[str
     :param conditions: the conditions
     :return: a tuple of (temp, titles, description)
     """
+    if isinstance(conditions['temp'], dict):
+        temp: float = conditions['temp']['day']
+    else:
+        temp: float = conditions['temp']
+
     # convert from K to C
-    temp_in_celsius: float = conditions['temp'] - 273.15
+    temp_in_celsius: float = temp - 273.15
 
     weathers = conditions['weather']
     print(f"{len(weathers)} {weather_timeframe} weather(s): ", weathers)

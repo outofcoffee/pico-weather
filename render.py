@@ -11,14 +11,14 @@ def get_last_text_y() -> int:
     return last_text_y
 
 
-def display_info(epd: EPD_2in13_V3_Landscape, append: bool, *lines: str):
+def display_text(epd: EPD_2in13_V3_Landscape, append: bool, *lines: str):
     """
     Displays the given lines of text on the e-ink display, optionally appending to the existing display.
     """
-    display_info_at_coordinates(epd, append, 0, *lines)
+    display_text_at_coordinates(epd, append, 0, *lines)
 
 
-def display_info_at_coordinates(epd: EPD_2in13_V3_Landscape, append: bool, x: int, *lines: str):
+def display_text_at_coordinates(epd: EPD_2in13_V3_Landscape, append: bool, x: int, *lines: str):
     """
     Displays the given lines of text on the e-ink display, optionally appending to the existing display.
     """
