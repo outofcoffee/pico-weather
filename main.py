@@ -5,7 +5,8 @@ import network
 from display import EPD_2in13_V3_Landscape
 from images import show_image, IMAGE_DIM
 from render import MAX_TEXT_WIDTH, display_text, display_text_at_coordinates, add_vertical_space, \
-    get_last_text_y
+    get_last_text_y, flush_display, RENDER_FLAG_FLUSH, RENDER_FLAG_CLEAR, RENDER_FLAG_APPEND_ONLY, \
+    render_horizontal_separator, RENDER_FLAG_THIN_PADDING, RENDER_FLAG_BLANK
 from utils import format_date, read_config, wrap_text, sentence_join, Config
 from weather import get_img_for_title, fetch_weather, Weather
 
@@ -47,10 +48,10 @@ def connect_and_fetch(config: Config, epd: EPD_2in13_V3_Landscape):
     print(f"connecting to {config.ssid}...")
 
     epd.init()
-    epd.Clear()
+
     display_text(
         epd,
-        False,
+        RENDER_FLAG_BLANK | RENDER_FLAG_FLUSH,
         f"Connecting to {config.ssid}..."
     )
 
@@ -62,7 +63,7 @@ def connect_and_fetch(config: Config, epd: EPD_2in13_V3_Landscape):
 
     display_text(
         epd,
-        True,
+        RENDER_FLAG_FLUSH,
         "Connected",
         f"IP: {ip}"
     )
@@ -73,33 +74,34 @@ def connect_and_fetch(config: Config, epd: EPD_2in13_V3_Landscape):
         print('received keyboard interrupt when fetching weather')
         machine.reset()
 
+    # we don't need the network anymore
+    disconnect(wlan)
+
     weather_date = format_date(current.dt)
+
     display_text(
         epd,
-        False,
+        RENDER_FLAG_CLEAR | RENDER_FLAG_BLANK | RENDER_FLAG_THIN_PADDING,
         f"Weather {weather_date}",
     )
-    add_vertical_space(4)
 
-    display_text(epd, True, "NOW")
+    render_horizontal_separator(epd)
+    display_text(epd, RENDER_FLAG_APPEND_ONLY, "NOW")
     render_weather(epd, current)
 
-    add_vertical_space(2)
-    epd.hline(1, get_last_text_y() + 8, 248, 0x00)
-    add_vertical_space(2)
-
-    display_text(epd, True, "TODAY")
+    render_horizontal_separator(epd)
+    display_text(epd, RENDER_FLAG_APPEND_ONLY, "TODAY")
     display_text(
         epd,
-        True,
+        RENDER_FLAG_APPEND_ONLY,
         *daily.day_summary
     )
+    add_vertical_space(2)
     render_weather(epd, daily)
 
+    flush_display(epd)
     epd.delay_ms(2000)
     epd.sleep()
-
-    disconnect(wlan)
 
 
 def render_weather(epd: EPD_2in13_V3_Landscape, weather: Weather):
@@ -116,7 +118,7 @@ def render_weather(epd: EPD_2in13_V3_Landscape, weather: Weather):
     desc = wrap_text(weather.description, MAX_TEXT_WIDTH)
     display_text_at_coordinates(
         epd,
-        True,
+        RENDER_FLAG_APPEND_ONLY,
         37,
         temp,
         title,

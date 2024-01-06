@@ -52,4 +52,4 @@ def show_image(epd: EPD_2in13_V3_Landscape, img_path: str, x: int, y: int):
         return
 
     epd.blit(fb, x, y)
-    epd.display(epd.buffer)
+    # epd.display(epd.buffer)
