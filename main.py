@@ -73,16 +73,17 @@ def render(display: DisplayController, current: Weather, daily: Weather):
         *daily.day_summary
     )
     display.add_vertical_space(2)
-    render_weather(display, daily)
+    render_weather(display, daily, show_min_max=True)
 
     display.flush_display()
 
 
-def render_weather(display: DisplayController, weather: Weather):
+def render_weather(display: DisplayController, weather: Weather, show_min_max: bool = False):
     """
     Renders the given weather on the display.
     :param display: the display controller
     :param weather: the weather
+    :param show_min_max: whether to show the min/max temperatures
     """
     image_x = 0
     image_y = display.get_last_text_y() + 7
@@ -92,7 +93,10 @@ def render_weather(display: DisplayController, weather: Weather):
             show_image(display, img_path, image_x, image_y)
             image_x += IMAGE_DIM + 4
 
-    temp = f"{weather.temp:.1f} C"
+    temp = f"{weather.temp.main:.1f} C"
+    if show_min_max:
+        temp += f" (low: {weather.temp.temp_min:.1f} C / high: {weather.temp.temp_max:.1f} C)"
+
     title = sentence_join(weather.titles)
     desc = wrap_text(weather.description, DisplayController.MAX_TEXT_WIDTH)
 

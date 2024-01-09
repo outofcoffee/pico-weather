@@ -1,17 +1,28 @@
 import urequests as requests
 
-from render import MAX_TEXT_WIDTH
+from render import DisplayController
 from utils import wrap_text, sentence_join, ensure_suffix
+
+
+class Temperature:
+    main: float
+    temp_min: float
+    temp_max: float
+
+    def __init__(self, main: float, temp_min: float, temp_max: float):
+        self.main = main
+        self.temp_min = temp_min
+        self.temp_max = temp_max
 
 
 class Weather:
     dt: int
-    temp: float
+    temp: Temperature
     titles: list[str]
     description: str
     day_summary: list[str]
 
-    def __init__(self, dt: int, temp: float, titles: list[str], description: str, day_summary: list[str]):
+    def __init__(self, dt: int, temp: Temperature, titles: list[str], description: str, day_summary: list[str]):
         self.dt = dt
         self.temp = temp
         self.titles = titles
@@ -70,56 +81,68 @@ def fetch_weather(lat: str, lon: str, openweathermap_key: str) -> tuple[Weather,
     (current_temp, current_titles, current_desc) = summarise_conditions('current', current_conditions)
     current = Weather(dt, current_temp, current_titles, current_desc, [])
 
-    # multiple daily forecasts
     daily_conditions = resp['daily']
+
+    # multiple daily forecasts; first element is today
     if len(daily_conditions) > 0:
         today_conditions = daily_conditions[0]
         (daily_temp, daily_titles, daily_desc) = summarise_conditions('daily', today_conditions)
 
         today_summary = ensure_suffix(today_conditions['summary'], ".")
-        day_summary = wrap_text(today_summary, MAX_TEXT_WIDTH)
+        day_summary = wrap_text(today_summary, DisplayController.MAX_TEXT_WIDTH)
         daily = Weather(dt, daily_temp, daily_titles, daily_desc, day_summary)
 
     else:
         print(f"no daily weather returned")
-        daily = Weather(dt, 0, [], "", [])
+        daily = Weather(dt, Temperature(0, 0, 0), [], "", [])
 
     return current, daily
 
 
-def summarise_conditions(weather_timeframe, conditions) -> tuple[float, list[str], str]:
+def summarise_conditions(weather_timeframe, conditions) -> tuple[Temperature, list[str], str]:
     """
     Summarises the given current conditions and returns a tuple of (temp, titles, description)
     :param weather_timeframe: the weather timeframe, e.g. 'current' or 'daily'
     :param conditions: the conditions
     :return: a tuple of (temp, titles, description)
     """
-    temp: float
+    temp: Temperature
     if isinstance(conditions['temp'], dict):
-        temp = conditions['temp']['day']
+        temp = Temperature(
+            kelvin_to_celsius(conditions['temp']['day']),
+            kelvin_to_celsius(conditions['temp']['min']),
+            kelvin_to_celsius(conditions['temp']['max']),
+        )
     else:
-        temp = conditions['temp']
-
-    # convert from K to C
-    temp_in_celsius: float = temp - 273.15
+        single_temp = kelvin_to_celsius(conditions['temp'])
+        temp = Temperature(single_temp, single_temp, single_temp)
 
     weathers = conditions['weather']
     print(f"{len(weathers)} {weather_timeframe} weather(s): ", weathers)
 
-    summary: tuple[float, list[str], str]
+    summary: tuple[Temperature, list[str], str]
     if len(weathers) > 0:
         titles: list[str] = []
         descriptions: list[str] = []
 
-        for i, weather in enumerate(weathers):
+        for weather in weathers:
             titles.append(weather['main'])
             descriptions.append(weather['description'])
 
-        summary = temp_in_celsius, titles, sentence_join(descriptions)
+        summary = temp, titles, sentence_join(descriptions)
 
     else:
         print(f"no {weather_timeframe} weather returned")
-        summary = temp_in_celsius, [], ""
+        summary = temp, [], ""
 
     print(f"{weather_timeframe}: {summary}")
     return summary
+
+
+def kelvin_to_celsius(temp: float) -> float:
+    """
+    Converts the given temperature from Kelvin to Celsius
+    :param temp: the temperature in Kelvin
+    :return: the temperature in Celsius
+    """
+    return temp - 273.15
