@@ -1,15 +1,14 @@
 import framebuf
 
-from display import EPD_2in13_V3_Landscape
-
+from render import DisplayController
 
 IMAGE_DIM = 32
 
 
-def show_image(epd: EPD_2in13_V3_Landscape, img_path: str, x: int, y: int):
+def show_image(display: DisplayController, img_path: str, x: int, y: int):
     """
     Displays the given image on the e-ink display.
-    :param epd: the e-ink display
+    :param display: the display controller
     :param img_path: the image path
     :param x: the x coordinate
     :param y: the y coordinate
@@ -51,5 +50,5 @@ def show_image(epd: EPD_2in13_V3_Landscape, img_path: str, x: int, y: int):
         print(f"unknown image path {img_path}")
         return
 
-    epd.blit(fb, x, y)
+    display.blit(fb, x, y)
     # epd.display(epd.buffer)

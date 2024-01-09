@@ -4,9 +4,7 @@ import network
 
 from display import EPD_2in13_V3_Landscape
 from images import show_image, IMAGE_DIM
-from render import MAX_TEXT_WIDTH, display_text, display_text_at_coordinates, add_vertical_space, \
-    get_last_text_y, flush_display, RENDER_FLAG_FLUSH, RENDER_FLAG_CLEAR, RENDER_FLAG_APPEND_ONLY, \
-    render_horizontal_separator, RENDER_FLAG_THIN_PADDING, RENDER_FLAG_BLANK
+from render import DisplayController
 from utils import format_date, read_config, wrap_text, sentence_join, Config
 from weather import get_img_for_title, fetch_weather, Weather
 
@@ -39,19 +37,18 @@ def disconnect(wlan: network.WLAN):
     wlan.active(False)
 
 
-def connect_and_fetch(config: Config, epd: EPD_2in13_V3_Landscape):
+def connect_and_fetch(config: Config, display: DisplayController):
     """
     Connects to the configured network and fetches the current weather.
     :param config: the configuration
-    :param epd: the e-ink display
+    :param display: the display controller
     """
     print(f"connecting to {config.ssid}...")
 
-    epd.init()
+    display.init()
 
-    display_text(
-        epd,
-        RENDER_FLAG_BLANK | RENDER_FLAG_FLUSH,
+    display.display_text(
+        DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_FLUSH,
         f"Connecting to {config.ssid}..."
     )
 
@@ -61,9 +58,8 @@ def connect_and_fetch(config: Config, epd: EPD_2in13_V3_Landscape):
         print('received keyboard interrupt when connecting to network')
         machine.reset()
 
-    display_text(
-        epd,
-        RENDER_FLAG_FLUSH,
+    display.display_text(
+        DisplayController.RENDER_FLAG_FLUSH,
         "Connected",
         f"IP: {ip}"
     )
@@ -79,48 +75,49 @@ def connect_and_fetch(config: Config, epd: EPD_2in13_V3_Landscape):
 
     weather_date = format_date(current.dt)
 
-    display_text(
-        epd,
-        RENDER_FLAG_CLEAR | RENDER_FLAG_BLANK | RENDER_FLAG_THIN_PADDING,
+    display.display_text(
+        DisplayController.RENDER_FLAG_CLEAR | DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_THIN_PADDING,
         f"Weather {weather_date}",
     )
 
-    render_horizontal_separator(epd)
-    display_text(epd, RENDER_FLAG_APPEND_ONLY, "NOW")
-    render_weather(epd, current)
+    display.render_horizontal_separator()
+    display.display_text(DisplayController.RENDER_FLAG_APPEND_ONLY, "NOW")
+    render_weather(display, current)
 
-    render_horizontal_separator(epd)
-    display_text(epd, RENDER_FLAG_APPEND_ONLY, "TODAY")
-    display_text(
-        epd,
-        RENDER_FLAG_APPEND_ONLY,
+    display.render_horizontal_separator()
+    display.display_text(DisplayController.RENDER_FLAG_APPEND_ONLY, "TODAY")
+    display.display_text(
+        DisplayController.RENDER_FLAG_APPEND_ONLY,
         *daily.day_summary
     )
-    add_vertical_space(2)
-    render_weather(epd, daily)
+    display.add_vertical_space(2)
+    render_weather(display, daily)
 
-    flush_display(epd)
-    epd.delay_ms(2000)
-    epd.sleep()
+    display.flush_display()
+    display.deep_sleep()
 
 
-def render_weather(epd: EPD_2in13_V3_Landscape, weather: Weather):
+def render_weather(display: DisplayController, weather: Weather):
+    """
+    Renders the given weather on the display.
+    :param display: the display controller
+    :param weather: the weather
+    """
     image_x = 0
-    image_y = get_last_text_y() + 7
+    image_y = display.get_last_text_y() + 7
     for title in weather.titles:
         img_path = get_img_for_title(title)
         if img_path:
-            show_image(epd, img_path, image_x, image_y)
+            show_image(display, img_path, image_x, image_y)
             image_x += IMAGE_DIM + 4
 
     temp = f"{weather.temp:.1f} C"
     title = sentence_join(weather.titles)
-    desc = wrap_text(weather.description, MAX_TEXT_WIDTH)
+    desc = wrap_text(weather.description, DisplayController.MAX_TEXT_WIDTH)
 
     # render to the right of the image (image_x)
-    display_text_at_coordinates(
-        epd,
-        RENDER_FLAG_APPEND_ONLY,
+    display.display_text_at_coordinates(
+        DisplayController.RENDER_FLAG_APPEND_ONLY,
         image_x,
         temp,
         title,
@@ -131,9 +128,10 @@ def render_weather(epd: EPD_2in13_V3_Landscape, weather: Weather):
 def main():
     config = read_config()
     epd = EPD_2in13_V3_Landscape()
+    display = DisplayController(epd)
 
     while True:
-        connect_and_fetch(config, epd)
+        connect_and_fetch(config, display)
         print(f'sleeping for {config.sleep_mins} minutes')
         utime.sleep(config.sleep_mins * 60)
 
