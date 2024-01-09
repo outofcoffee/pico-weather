@@ -86,3 +86,5 @@ Weather icons by <a target="_blank" href="https://icons8.com">Icons8</a>.
 - [ ] Add support for wind speed (m/s)
 - [ ] Add support for cloudiness (%)
 - [ ] Add support for `alerts`
+- [ ] Improve text wrapping
+- [ ] Add cache for weather data
