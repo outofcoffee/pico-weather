@@ -95,7 +95,7 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
 
     temp = f"{weather.temp.main:.1f} C"
     if show_min_max:
-        temp += f" (low: {weather.temp.temp_min:.1f} C / high: {weather.temp.temp_max:.1f} C)"
+        temp += f" (L:{weather.temp.temp_min:.1f} C / H:{weather.temp.temp_max:.1f} C)"
 
     title = sentence_join(weather.titles)
     desc = wrap_text(weather.description, DisplayController.MAX_TEXT_WIDTH)
