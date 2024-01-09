@@ -9,15 +9,15 @@ from utils import format_date, read_config, wrap_text, sentence_join, Config
 from weather import get_img_for_title, fetch_weather, Weather
 
 
-def fetch_and_render(config: Config, display: DisplayController):
+def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]:
     """
-    Connects to the configured network and fetches the current weather.
+    Connects to the configured network, fetches the weather,
+    then disconnects.
     :param config: the configuration
     :param display: the display controller
+    :return: the current and daily weather
     """
     print(f"connecting to {config.ssid}...")
-
-    display.init()
 
     display.display_text(
         DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_FLUSH,
@@ -45,6 +45,16 @@ def fetch_and_render(config: Config, display: DisplayController):
     # we don't need the network anymore
     disconnect(wlan)
 
+    return current, daily
+
+
+def render(display: DisplayController, current: Weather, daily: Weather):
+    """
+    Renders the given weather on the display.
+    :param display: the display controller
+    :param current: the current weather
+    :param daily: the daily weather
+    """
     weather_date = format_date(current.dt)
 
     display.display_text(
@@ -66,7 +76,6 @@ def fetch_and_render(config: Config, display: DisplayController):
     render_weather(display, daily)
 
     display.flush_display()
-    display.deep_sleep()
 
 
 def render_weather(display: DisplayController, weather: Weather):
@@ -103,7 +112,11 @@ def main():
     display = DisplayController(epd)
 
     while True:
-        fetch_and_render(config, display)
+        display.init()
+        current, daily = fetch(config, display)
+        render(display, current, daily)
+        display.deep_sleep()
+
         print(f'sleeping for {config.sleep_mins} minutes')
         utime.sleep(config.sleep_mins * 60)
 
