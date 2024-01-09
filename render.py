@@ -8,7 +8,7 @@ class DisplayController:
     Controller for the e-ink display.
     """
 
-    MAX_TEXT_WIDTH = 30
+    MAX_TEXT_WIDTH = 31
 
     RENDER_FLAG_CLEAR = 1  # 2^0
     RENDER_FLAG_APPEND_ONLY = 2  # 2^1
