@@ -78,3 +78,12 @@ Ctrl-]
 ## Image attribution
 
 Weather icons by <a target="_blank" href="https://icons8.com">Icons8</a>.
+
+---
+
+## Future improvements
+
+- [ ] Add support for `min` and `max` daily temperatures
+- [ ] Add support for wind speed (m/s)
+- [ ] Add support for cloudiness (%)
+- [ ] Add support for `alerts`
