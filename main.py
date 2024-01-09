@@ -1,43 +1,15 @@
 import machine
 import utime
-import network
 
 from display import EPD_2in13_V3_Landscape
 from images import show_image, IMAGE_DIM
+from net import connect_to_network, disconnect
 from render import DisplayController
 from utils import format_date, read_config, wrap_text, sentence_join, Config
 from weather import get_img_for_title, fetch_weather, Weather
 
 
-def connect_to_network(ssid: str, password: str) -> tuple[network.WLAN, str]:
-    """
-    Connects to the configured network and returns the WLAN client and IP address.
-    """
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(ssid, password)
-    while not wlan.isconnected():
-        print('Waiting for connection...')
-        utime.sleep(1)
-
-    ifconfig = wlan.ifconfig()
-    print(ifconfig)
-
-    ip_addr = ifconfig[0]
-    print(f'Connected on {ip_addr}')
-    return wlan, ip_addr
-
-
-def disconnect(wlan: network.WLAN):
-    """
-    Disconnects from the given WLAN client.
-    """
-    print('disconnecting from network')
-    wlan.disconnect()
-    wlan.active(False)
-
-
-def connect_and_fetch(config: Config, display: DisplayController):
+def fetch_and_render(config: Config, display: DisplayController):
     """
     Connects to the configured network and fetches the current weather.
     :param config: the configuration
@@ -131,7 +103,7 @@ def main():
     display = DisplayController(epd)
 
     while True:
-        connect_and_fetch(config, display)
+        fetch_and_render(config, display)
         print(f'sleeping for {config.sleep_mins} minutes')
         utime.sleep(config.sleep_mins * 60)
 

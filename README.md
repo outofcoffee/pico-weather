@@ -30,7 +30,7 @@ Copy the Python files in the root directory and the `config.txt` file to the Pic
 Example using `microupload.py` script:
 
 ```bash
-$ python3 ./scripts/microupload.py -v /dev/cu.usbmodem14101 config.txt display.py images.py main.py render.py utils.py weather.py
+$ python3 ./scripts/microupload.py -v /dev/cu.usbmodem14101 config.txt display.py images.py main.py net.py render.py utils.py weather.py
 ```
 
 Alternatively, you can use the `mpremote` tool to copy the files to the Pi Pico.
