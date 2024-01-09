@@ -94,10 +94,11 @@ def summarise_conditions(weather_timeframe, conditions) -> tuple[float, list[str
     :param conditions: the conditions
     :return: a tuple of (temp, titles, description)
     """
+    temp: float
     if isinstance(conditions['temp'], dict):
-        temp: float = conditions['temp']['day']
+        temp = conditions['temp']['day']
     else:
-        temp: float = conditions['temp']
+        temp = conditions['temp']
 
     # convert from K to C
     temp_in_celsius: float = temp - 273.15
