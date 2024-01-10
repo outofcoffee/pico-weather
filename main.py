@@ -59,15 +59,17 @@ def render(display: DisplayController, current: Weather, daily: Weather):
 
     display.display_text(
         DisplayController.RENDER_FLAG_CLEAR | DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_THIN_PADDING,
-        f"Weather {weather_date}",
+        "NOW"
     )
-
-    display.render_horizontal_separator()
-    display.display_text(DisplayController.RENDER_FLAG_APPEND_ONLY, "NOW")
+    display.display_right(
+        DisplayController.RENDER_FLAG_APPEND_ONLY | DisplayController.RENDER_FLAG_NO_V_CURSOR,
+        weather_date
+    )
     render_weather(display, current)
 
     display.render_horizontal_separator()
     display.display_text(DisplayController.RENDER_FLAG_APPEND_ONLY, "TODAY")
+    display.add_vertical_space(2)
     display.display_text(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         *daily.day_summary
