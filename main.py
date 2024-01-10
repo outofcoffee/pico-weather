@@ -5,7 +5,7 @@ from display import EPD_2in13_V3_Landscape
 from images import show_image, IMAGE_DIM
 from net import connect_to_network, disconnect
 from render import DisplayController
-from utils import format_date, read_config, wrap_text, sentence_join, Config
+from utils import format_date, read_config, wrap_text, sentence_join, Config, truncate_lines
 from weather import get_img_for_title, fetch_weather, Weather
 
 
@@ -70,9 +70,11 @@ def render(display: DisplayController, current: Weather, daily: Weather):
     display.render_horizontal_separator()
     display.display_text(DisplayController.RENDER_FLAG_APPEND_ONLY, "TODAY")
     display.add_vertical_space(2)
+
+    today_summary = truncate_lines(daily.day_summary, 3)
     display.display_text(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
-        *daily.day_summary
+        *today_summary
     )
     display.add_vertical_space(2)
     render_weather(display, daily, show_min_max=True)

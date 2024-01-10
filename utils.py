@@ -104,3 +104,17 @@ def ensure_suffix(to_check: str, suffix: str) -> str:
         return to_check
     else:
         return to_check + suffix
+
+
+def truncate_lines(lines: list[str], max_lines: int) -> list[str]:
+    """
+    Truncates the given list of lines to the given maximum number of lines.
+    :param lines: the lines
+    :param max_lines: the maximum number of lines
+    :return: the truncated lines
+    """
+    if len(lines) <= max_lines:
+        return lines
+    else:
+        lines = lines[0:max_lines]
+        lines[-1] = lines[-1][0:-3].strip() + "..."
