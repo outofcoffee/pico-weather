@@ -94,9 +94,6 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
             image_x += IMAGE_DIM + 4
 
     temp = f"{weather.temp.main:.1f} C"
-    if show_min_max:
-        temp += f" (L:{weather.temp.temp_min:.1f} C / H:{weather.temp.temp_max:.1f} C)"
-
     title = sentence_join(weather.titles)
     desc = wrap_text(weather.description, DisplayController.MAX_TEXT_WIDTH)
 
@@ -105,6 +102,17 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         image_x,
         temp,
+    )
+
+    if show_min_max:
+        display.display_right(
+            DisplayController.RENDER_FLAG_APPEND_ONLY,
+            f"L/H: {weather.temp.temp_min:.1f}-{weather.temp.temp_max:.1f} C"
+        )
+
+    display.display_text_at_coordinates(
+        DisplayController.RENDER_FLAG_APPEND_ONLY,
+        image_x,
         title,
         *desc,
     )

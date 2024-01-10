@@ -2,6 +2,9 @@ import framebuf
 
 from display import EPD_2in13_V3_Landscape
 
+# pixel width of a character
+CHAR_WIDTH = 8
+
 
 class DisplayController:
     """
@@ -15,6 +18,7 @@ class DisplayController:
     RENDER_FLAG_FLUSH = 4  # 2^2
     RENDER_FLAG_THIN_PADDING = 8  # 2^3
     RENDER_FLAG_BLANK = 16  # 2^4
+    RENDER_FLAG_NO_V_CURSOR = 32  # 2^5
 
     last_text_y = 0
 
@@ -49,8 +53,11 @@ class DisplayController:
             self.epd.fill(0xff)
             self.last_text_y = 0
 
+        line_stride: int
         for line in lines:
-            if render_flags & self.RENDER_FLAG_THIN_PADDING:
+            if render_flags & self.RENDER_FLAG_NO_V_CURSOR:
+                line_stride = 0
+            elif render_flags & self.RENDER_FLAG_THIN_PADDING:
                 line_stride = 8
             else:
                 line_stride = 10
@@ -64,7 +71,6 @@ class DisplayController:
     def flush_display(self):
         """
         Flushes the display buffer to the display.
-        :param epd: the display
         """
         self.epd.display(self.epd.buffer)
 
@@ -80,7 +86,7 @@ class DisplayController:
         Renders a horizontal separator on the display.
         """
         self.add_vertical_space(2)
-        self.epd.hline(1, self.get_last_text_y() + 8, 248, 0x00)
+        self.epd.hline(1, self.get_last_text_y() + CHAR_WIDTH, 248, 0x00)
         self.add_vertical_space(2)
 
     def deep_sleep(self):
@@ -98,3 +104,7 @@ class DisplayController:
         :param y: y coordinate
         """
         self.epd.blit(fb, x, y)
+
+    def display_right(self, flags: int, text: str):
+        padding = (self.MAX_TEXT_WIDTH - len(text)) * CHAR_WIDTH
+        self.display_text_at_coordinates(flags | self.RENDER_FLAG_NO_V_CURSOR, padding, text)
