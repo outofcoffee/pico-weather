@@ -49,7 +49,13 @@ def format_date(dt: int) -> str:
 
 
 def wrap_text(text: str, max_width: int) -> list[str]:
-    return [text[idx:idx + max_width] for idx in range(0, len(text), max_width)]
+    """
+    Wraps the given text to the given maximum width.
+    :param text:
+    :param max_width:
+    :return:
+    """
+    return [text[idx:idx + max_width].strip() for idx in range(0, len(text), max_width)]
 
 
 def read_config() -> Config:

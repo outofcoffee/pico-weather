@@ -76,7 +76,7 @@ def render(display: DisplayController, current: Weather, daily: Weather):
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         *today_summary
     )
-    display.add_vertical_space(2)
+    display.add_vertical_space(4)
     render_weather(display, daily, show_min_max=True)
 
     display.flush_display()
