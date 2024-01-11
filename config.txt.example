@@ -3,4 +3,5 @@ password=yourpassword
 lat=50.819767
 lon=3.257726
 openweathermap_key=yourapikey
-sleep_mins=60
+refresh_mins=60
+cache_mins=10

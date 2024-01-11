@@ -1,7 +1,11 @@
 import urequests as requests
 
+import json
+import os
+import utime
+
 from render import DisplayController
-from utils import wrap_text, sentence_join, ensure_suffix
+from utils import wrap_text, sentence_join, ensure_suffix, dir_exists, file_exists
 
 
 class Temperature:
@@ -28,6 +32,27 @@ class Weather:
         self.titles = titles
         self.description = description
         self.day_summary = day_summary
+
+    def to_dict(self):
+        return {
+            'dt': self.dt,
+            'temp': {
+                'main': self.temp.main,
+                'temp_min': self.temp.temp_min,
+                'temp_max': self.temp.temp_max,
+            },
+            'titles': self.titles,
+            'description': self.description,
+            'day_summary': self.day_summary,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        temp = Temperature(data['temp']['main'], data['temp']['temp_min'], data['temp']['temp_max'])
+        return cls(data['dt'], temp, data['titles'], data['description'], data['day_summary'])
+
+
+CACHE_DIR = 'cache'
 
 
 def get_img_for_title(title: str) -> str:
@@ -146,3 +171,75 @@ def kelvin_to_celsius(temp: float) -> float:
     :return: the temperature in Celsius
     """
     return temp - 273.15
+
+
+def ensure_cache_dir():
+    """
+    Ensures that the cache directory exists.
+    """
+    if not dir_exists(CACHE_DIR):
+        os.mkdir(CACHE_DIR)
+
+
+def is_cache_valid(timeframe: str, cache_mins: int) -> bool:
+    """
+    Returns the timestamp of the most recent cached weather data, or 0 if no cache exists.
+    :param timeframe: the timeframe
+    :param cache_mins: the cache expiry in minutes
+    """
+    ensure_cache_dir()
+
+    is_valid: bool
+    if file_exists(f'{CACHE_DIR}/{timeframe}_timestamp'):
+        with open(f'{CACHE_DIR}/{timeframe}_timestamp', 'r') as f:
+            timestamp = int(f.read())
+            age = utime.time() - timestamp
+            print(f"cache for {timeframe} is {age} seconds old")
+            is_valid = age < (cache_mins * 60)
+    else:
+        is_valid = False
+
+    print(f"cache for {timeframe} is {'valid' if is_valid else 'invalid'} (expiry {cache_mins} mins)")
+    return is_valid
+
+
+def cache_weather(weather: Weather, timeframe: str):
+    """
+    Caches the given weather.
+    :param weather: the weather
+    :param timeframe: the timeframe
+    """
+    ensure_cache_dir()
+    print(f"caching weather for {timeframe}")
+
+    with open(f'{CACHE_DIR}/{timeframe}.json', 'w') as f:
+        weather_dict = weather.to_dict()
+        weather_json = json.dumps(weather_dict)
+        f.write(weather_json)
+
+    with open(f'{CACHE_DIR}/{timeframe}_timestamp', 'w') as f:
+        # write the current timestamp
+        # note, this is not necessarily the same as the weather.dt timestamp
+        # is it depends on the device RTC
+        f.write(str(utime.time()))
+
+
+def load_cached_weather(timeframe: str, cache_mins: int) -> Weather:
+    """
+    Returns the cached weather, or None if no cache exists.
+    :param timeframe: the timeframe
+    :param cache_mins: the cache expiry in minutes
+    """
+    if not is_cache_valid(timeframe, cache_mins):
+        return None
+
+    ensure_cache_dir()
+    if file_exists(f'{CACHE_DIR}/{timeframe}.json'):
+        with open(f'{CACHE_DIR}/{timeframe}.json', 'r') as f:
+            weather_json = f.read()
+            print(f"loaded cached weather for {timeframe}", weather_json)
+            weather_dict = json.loads(weather_json)
+            return Weather.from_dict(weather_dict)
+    else:
+        print(f"cache for {timeframe} does not exist")
+        return None

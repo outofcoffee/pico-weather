@@ -1,3 +1,5 @@
+import os
+
 import utime
 
 
@@ -7,7 +9,8 @@ class Config:
     lat: str
     lon: str
     openweathermap_key: str
-    sleep_mins: int
+    refresh_mins: int
+    cache_mins: int
 
 
 def format_date(dt: int) -> str:
@@ -77,8 +80,10 @@ def read_config() -> Config:
                 config.lon = line[4:].strip()
             elif line.startswith('openweathermap_key='):
                 config.openweathermap_key = line[19:].strip()
-            elif line.startswith('sleep_mins='):
-                config.sleep_mins = int(line[11:].strip())
+            elif line.startswith('refresh_mins='):
+                config.refresh_mins = int(line[13:].strip())
+            elif line.startswith('cache_mins='):
+                config.cache_mins = int(line[11:].strip())
 
     return config
 
@@ -124,3 +129,17 @@ def truncate_lines(lines: list[str], max_lines: int) -> list[str]:
     else:
         lines = lines[0:max_lines]
         lines[-1] = lines[-1][0:-3].strip() + "..."
+
+
+def dir_exists(filename):
+    try:
+        return (os.stat(filename)[0] & 0x4000) != 0
+    except OSError:
+        return False
+
+
+def file_exists(filename):
+    try:
+        return (os.stat(filename)[0] & 0x4000) == 0
+    except OSError:
+        return False

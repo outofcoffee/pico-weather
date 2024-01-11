@@ -6,18 +6,26 @@ from images import show_image, IMAGE_DIM
 from net import connect_to_network, disconnect
 from render import DisplayController
 from utils import format_date, read_config, wrap_text, sentence_join, Config, truncate_lines
-from weather import get_img_for_title, fetch_weather, Weather
+from weather import get_img_for_title, Weather, load_cached_weather, fetch_weather, \
+    cache_weather
 
 
 def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]:
     """
-    Connects to the configured network, fetches the weather,
-    then disconnects.
+    First tries to load the weather from the cache. If it's not there, connects to the configured network, fetches the
+    weather, disconnects, and caches the weather.
     :param config: the configuration
     :param display: the display controller
     :return: the current and daily weather
     """
-    print(f"connecting to {config.ssid}...")
+    current: Weather = load_cached_weather('current', config.cache_mins)
+    daily: Weather = load_cached_weather('daily', config.cache_mins)
+
+    if all([current, daily]):
+        print(f"using cached weather")
+        return current, daily
+    else:
+        print(f"no cached weather found; fetching from remote")
 
     display.display_text(
         DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_FLUSH,
@@ -44,6 +52,9 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
 
     # we don't need the network anymore
     disconnect(wlan)
+
+    cache_weather(current, 'current')
+    cache_weather(daily, 'daily')
 
     return current, daily
 
@@ -133,8 +144,8 @@ def main():
         render(display, current, daily)
         display.deep_sleep()
 
-        print(f'sleeping for {config.sleep_mins} minutes')
-        utime.sleep(config.sleep_mins * 60)
+        print(f'sleeping for {config.refresh_mins} minutes')
+        utime.sleep(config.refresh_mins * 60)
 
 
 if __name__ == '__main__':
