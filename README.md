@@ -2,7 +2,7 @@
 
 A simple weather dashboard for the Pi Pico.
 
-Fetches weather data from OpenWeather and displays it on an e-paper display on the Pi Pico.
+Fetches weather data from OpenWeather and displays it on an e-paper display.
 
 <img alt="Photo of the Pi Pico with the e-Paper display showing the weather" src="docs/img/pico_weather.png" title="Pico Weather Dashboard" width="529em"/>
 

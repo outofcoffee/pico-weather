@@ -195,7 +195,10 @@ def is_cache_valid(timeframe: str, cache_mins: int) -> bool:
             timestamp = int(f.read())
             age = utime.time() - timestamp
             print(f"cache for {timeframe} is {age} seconds old")
-            is_valid = age < (cache_mins * 60)
+
+            # if age is negative, the device RTC is probably not set
+            is_valid = 0 <= age < (cache_mins * 60)
+
     else:
         is_valid = False
 
@@ -213,8 +216,7 @@ def cache_weather(weather: Weather, timeframe: str):
     print(f"caching weather for {timeframe}")
 
     with open(f'{CACHE_DIR}/{timeframe}.json', 'w') as f:
-        weather_dict = weather.to_dict()
-        weather_json = json.dumps(weather_dict)
+        weather_json = json.dumps(weather.to_dict())
         f.write(weather_json)
 
     with open(f'{CACHE_DIR}/{timeframe}_timestamp', 'w') as f:
