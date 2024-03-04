@@ -112,11 +112,16 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
     """
     image_x = 0
     image_y = display.get_last_text_y() + 7
+
+    img_paths = []
     for title in weather.titles:
         img_path = get_img_for_title(title)
         if img_path:
-            show_image(display, img_path, image_x, image_y)
-            image_x += IMAGE_DIM + 4
+            img_paths.append(img_path)
+
+    for img_path in set(img_paths):
+        show_image(display, img_path, image_x, image_y)
+        image_x += IMAGE_DIM + 4
 
     temp = f"{weather.temp.main:.1f} C"
     title = sentence_join(weather.titles)
