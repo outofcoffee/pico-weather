@@ -46,12 +46,22 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
 
     try:
         current, daily = fetch_weather(config.lat, config.lon, config.openweathermap_key)
-    except KeyboardInterrupt:
-        print('received keyboard interrupt when fetching weather')
-        machine.reset()
+    except Exception as e:
+        print(f"error fetching weather: {e}")
+        display.display_text(
+            DisplayController.RENDER_FLAG_FLUSH,
+            "Failed to fetch weather",
+            f"Cause: {e}"
+        )
+        display.deep_sleep()
+    finally:
+        # we don't need the network anymore
+        disconnect(wlan)
 
-    # we don't need the network anymore
-    disconnect(wlan)
+        if not all([current, daily]):
+            print(f"Sleeping for 5 minutes then resetting the device")
+            utime.sleep(300)
+            machine.reset()
 
     cache_weather(current, 'current')
     cache_weather(daily, 'daily')
