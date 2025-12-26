@@ -45,7 +45,7 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
     )
 
     try:
-        current, daily = fetch_weather(config.lat, config.lon, config.openweathermap_key)
+        current, daily = fetch_weather(display, config.lat, config.lon, config.openweathermap_key)
     except Exception as e:
         print(f"error fetching weather: {e}")
         display.display_text(
@@ -125,7 +125,7 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
 
     temp = f"{weather.temp.main:.1f} C"
     title = sentence_join(weather.titles)
-    desc = wrap_text(weather.description, DisplayController.MAX_TEXT_WIDTH)
+    desc = wrap_text(weather.description, display.get_max_text_width())
 
     # render to the right of the image (image_x)
     display.display_text_at_coordinates(

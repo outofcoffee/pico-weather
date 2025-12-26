@@ -81,7 +81,7 @@ def get_img_for_title(title: str) -> str:
     return img_path
 
 
-def fetch_weather(lat: str, lon: str, openweathermap_key: str) -> tuple[Weather, Weather]:
+def fetch_weather(display: DisplayController, lat: str, lon: str, openweathermap_key: str) -> tuple[Weather, Weather]:
     """
     Fetches the current weather from OpenWeatherMap and returns a tuple
     of Weather objects [current, daily]
@@ -114,7 +114,7 @@ def fetch_weather(lat: str, lon: str, openweathermap_key: str) -> tuple[Weather,
         (daily_temp, daily_titles, daily_desc) = summarise_conditions('daily', today_conditions)
 
         today_summary = ensure_suffix(today_conditions['summary'], ".")
-        day_summary = wrap_text(today_summary, DisplayController.MAX_TEXT_WIDTH)
+        day_summary = wrap_text(today_summary, display.get_max_text_width())
         daily = Weather(dt, daily_temp, daily_titles, daily_desc, day_summary)
 
     else:
