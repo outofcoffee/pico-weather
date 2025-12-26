@@ -127,10 +127,9 @@ def get_epd(config: Config) -> DisplayWrapper:
     Factory function that returns the appropriate EPD wrapper based on config.
     Adapts different manufacturer EPD implementations to a common DisplayWrapper interface.
     """
-    match config.display_size:
-        case 'large':
-            return EPD_7in5_B_Wrapper()
-        case 'small':
-            return EPD_2in13_V3_Wrapper()
-        case _:
-            raise ValueError(f"Unsupported display_size: {config.display_size}. Must be 'large' or 'small'.")
+    if config.display_size == 'large':
+        return EPD_7in5_B_Wrapper()
+    elif config.display_size == 'small':
+        return EPD_2in13_V3_Wrapper()
+    else:
+        raise ValueError(f"Unsupported display_size: {config.display_size}. Must be 'large' or 'small'.")
