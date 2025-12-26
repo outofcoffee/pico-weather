@@ -11,6 +11,7 @@ class Config:
     openweathermap_key: str
     refresh_mins: int
     cache_mins: int
+    display_size: str
 
 
 def format_date(dt: int) -> str:
@@ -70,7 +71,10 @@ def read_config() -> Config:
 
     with open('config.txt') as f:
         for line in f:
-            if line.startswith('ssid='):
+            if line.startswith('#'):
+                # ignore comments
+                continue
+            elif line.startswith('ssid='):
                 config.ssid = line[5:].strip()
             elif line.startswith('password='):
                 config.password = line[9:].strip()
@@ -84,6 +88,8 @@ def read_config() -> Config:
                 config.refresh_mins = int(line[13:].strip())
             elif line.startswith('cache_mins='):
                 config.cache_mins = int(line[11:].strip())
+            elif line.startswith('display_size='):
+                config.display_size = line[13:].strip()
 
     return config
 

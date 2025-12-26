@@ -1,7 +1,18 @@
+# WiFi settings
 ssid=yourssid
 password=yourpassword
+
+# Your location in lat/lon
 lat=50.819767
 lon=3.257726
+
+# API key for openweathermap
 openweathermap_key=yourapikey
+
+# Refresh frequency and API cache
 refresh_mins=60
 cache_mins=10
+
+# Display size can be 'small' or 'large'
+display_size=small
+# display_size=large
