@@ -129,6 +129,7 @@ def truncate_lines(lines: list[str], max_lines: int) -> list[str]:
     else:
         lines = lines[0:max_lines]
         lines[-1] = lines[-1][0:-3].strip() + "..."
+        return lines
 
 
 def dir_exists(filename):
