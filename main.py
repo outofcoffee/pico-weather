@@ -1,7 +1,7 @@
 import machine
 import utime
 
-from display import EPD_2in13_V3_Landscape
+from display import EPD_7in5_B
 from images import show_image, IMAGE_DIM
 from net import connect_to_network, disconnect
 from render import DisplayController
@@ -150,7 +150,7 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
 
 def main():
     config = read_config()
-    epd = EPD_2in13_V3_Landscape()
+    epd = EPD_7in5_B()
     display = DisplayController(epd)
 
     while True:

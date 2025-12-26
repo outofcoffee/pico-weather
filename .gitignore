@@ -3,3 +3,6 @@
 venv
 *.uf2
 /config.txt
+.claude/*.local.json
+.vscode/
+*.pyc
