@@ -11,8 +11,6 @@ class DisplayController:
     Controller for the e-ink display.
     """
 
-    MAX_TEXT_WIDTH = 31
-
     RENDER_FLAG_CLEAR = 1  # 2^0
     RENDER_FLAG_APPEND_ONLY = 2  # 2^1
     RENDER_FLAG_FLUSH = 4  # 2^2
@@ -36,6 +34,12 @@ class DisplayController:
         Returns the most recent Y value for rendered text
         """
         return self.last_text_y
+
+    def get_max_text_width(self) -> int:
+        """
+        Returns the maximum number of characters that can fit on a line.
+        """
+        return self.epd.max_draw_width // CHAR_WIDTH
 
     def display_text(self, render_flags: int, *lines: str):
         """
@@ -86,7 +90,7 @@ class DisplayController:
         Renders a horizontal separator on the display.
         """
         self.add_vertical_space(2)
-        self.epd.hline(1, self.get_last_text_y() + CHAR_WIDTH, 248, 0x00)
+        self.epd.hline(1, self.get_last_text_y() + CHAR_WIDTH, self.epd.max_draw_width, 0x00)
         self.add_vertical_space(2)
 
     def deep_sleep(self):
@@ -106,5 +110,5 @@ class DisplayController:
         self.epd.blit(fb, x, y)
 
     def display_right(self, flags: int, text: str):
-        padding = (self.MAX_TEXT_WIDTH - len(text)) * CHAR_WIDTH
+        padding = (self.get_max_text_width() - len(text)) * CHAR_WIDTH
         self.display_text_at_coordinates(flags | self.RENDER_FLAG_NO_V_CURSOR, padding, text)
