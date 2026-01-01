@@ -55,7 +55,7 @@ class DisplayController:
             self.epd.Clear()
         if render_flags & self.RENDER_FLAG_BLANK:
             self.epd.fill(0xff)
-            self.last_text_y = 0
+            self.last_text_y = self.epd._padding_top
 
         line_stride: int
         for line in lines:
