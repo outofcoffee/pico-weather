@@ -1,3 +1,4 @@
+from display_proxy import VirtualDisplayProxy
 import machine
 import utime
 
@@ -150,13 +151,21 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
 
 def main():
     config = read_config()
-    epd = get_epd(config)
+    phy_epd = get_epd(config)
+
+    epd = VirtualDisplayProxy(phy_epd)
+    epd.set_virtual_mode(True)
+
     display = DisplayController(epd)
 
     while True:
         display.init()
         current, daily = fetch(config, display)
         render(display, current, daily)
+
+        # flush the display
+        epd.set_virtual_mode(False)
+
         display.deep_sleep()
 
         print(f'sleeping for {config.refresh_mins} minutes')
