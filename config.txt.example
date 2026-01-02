@@ -16,3 +16,7 @@ cache_mins=10
 # Display size can be 'small' or 'large'
 display_size=small
 # display_size=large
+
+# Optional: Display padding in pixels (top,right,bottom,left)
+# If not specified, defaults to (0,2,0,0) i.e. small right margin
+# padding=10,10,10,10

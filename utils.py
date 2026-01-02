@@ -12,6 +12,7 @@ class Config:
     refresh_mins: int
     cache_mins: int
     display_size: str
+    padding: tuple[int, int, int, int] | None
 
 
 def format_date(dt: int) -> str:
@@ -68,6 +69,7 @@ def read_config() -> Config:
     :return: the configuration
     """
     config = Config()
+    config.padding = None
 
     with open('config.txt') as f:
         for line in f:
@@ -90,6 +92,11 @@ def read_config() -> Config:
                 config.cache_mins = int(line[11:].strip())
             elif line.startswith('display_size='):
                 config.display_size = line[13:].strip()
+            elif line.startswith('padding='):
+                padding_str = line[8:].strip()
+                parts = padding_str.split(',')
+                if len(parts) == 4:
+                    config.padding = (int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]))
 
     return config
 
