@@ -11,6 +11,11 @@ class DisplayWrapper:
         raise NotImplementedError
 
     @property
+    def height(self) -> int:
+        """Returns the physical height of the display."""
+        raise NotImplementedError
+
+    @property
     def max_draw_width(self) -> int:
         """Returns the maximum drawable width accounting for padding."""
         return self.width
@@ -56,6 +61,14 @@ class DisplayWrapper:
         """Blits a framebuffer to the display at the specified position."""
         raise NotImplementedError
 
+    def scroll(self, dx: int, dy: int) -> None:
+        """Scrolls the framebuffer by dx, dy pixels."""
+        raise NotImplementedError
+
+    def fill_rect(self, x: int, y: int, w: int, h: int, c: int) -> None:
+        """Fills a rectangle on the framebuffer."""
+        raise NotImplementedError
+
 
 class EPD_7in5_B_Wrapper(DisplayWrapper):
     """Wrapper for EPD_7in5_B that passes through all calls without change."""
@@ -67,6 +80,11 @@ class EPD_7in5_B_Wrapper(DisplayWrapper):
     def width(self) -> int:
         """Returns the physical width of the display."""
         return self._epd.width
+
+    @property
+    def height(self) -> int:
+        """Returns the physical height of the display."""
+        return self._epd.height
 
     def init(self):
         self._epd.init()
@@ -95,6 +113,12 @@ class EPD_7in5_B_Wrapper(DisplayWrapper):
     def blit(self, fb, x, y):
         self._epd.imageblack.blit(fb, x, y)
 
+    def scroll(self, dx, dy):
+        self._epd.imageblack.scroll(dx, dy)
+
+    def fill_rect(self, x, y, w, h, c):
+        self._epd.imageblack.fill_rect(x, y, w, h, c)
+
 
 class EPD_2in13_V3_Wrapper(DisplayWrapper):
     """Wrapper for EPD_2in13_V3_Landscape that adapts its interface."""
@@ -106,6 +130,11 @@ class EPD_2in13_V3_Wrapper(DisplayWrapper):
     def width(self) -> int:
         """Returns the physical width of the display."""
         return self._epd.width
+
+    @property
+    def height(self) -> int:
+        """Returns the physical height of the display."""
+        return self._epd.height
 
     def init(self):
         self._epd.init()
@@ -138,3 +167,11 @@ class EPD_2in13_V3_Wrapper(DisplayWrapper):
     def blit(self, fb, x, y):
         # The small EPD IS a framebuffer
         self._epd.blit(fb, x, y)
+
+    def scroll(self, dx, dy):
+        # The small EPD IS a framebuffer
+        self._epd.scroll(dx, dy)
+
+    def fill_rect(self, x, y, w, h, c):
+        # The small EPD IS a framebuffer
+        self._epd.fill_rect(x, y, w, h, c)

@@ -3,6 +3,7 @@ import machine
 import utime
 
 from display import get_epd
+from font_renderer import FontSize
 from images import show_image, IMAGE_DIM
 from net import connect_to_network, disconnect
 from render import DisplayController
@@ -79,23 +80,37 @@ def render(display: DisplayController, current: Weather, daily: Weather):
     """
     weather_date = format_date(current.dt)
 
-    display.display_text(
+    # MEDIUM font (20px) for "NOW" header
+    display.display_text_bm(
         DisplayController.RENDER_FLAG_CLEAR | DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_THIN_PADDING,
+        FontSize.MEDIUM,
         "NOW"
     )
-    display.display_right(
+
+    # Right-align date with SMALL font (18px)
+    display.display_right_bm(
         DisplayController.RENDER_FLAG_APPEND_ONLY | DisplayController.RENDER_FLAG_NO_V_CURSOR,
+        FontSize.SMALL,
         weather_date
     )
+
     render_weather(display, current)
 
     display.render_horizontal_separator()
-    display.display_text(DisplayController.RENDER_FLAG_APPEND_ONLY, "TODAY")
+
+    # MEDIUM font for "TODAY" header
+    display.display_text_bm(
+        DisplayController.RENDER_FLAG_APPEND_ONLY,
+        FontSize.MEDIUM,
+        "TODAY"
+    )
     display.add_vertical_space(2)
 
+    # SMALL font for body text
     today_summary = truncate_lines(daily.day_summary, 3)
-    display.display_text(
+    display.display_text_bm(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
+        FontSize.SMALL,
         *today_summary
     )
     display.add_vertical_space(4)
@@ -114,6 +129,7 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
     image_x = 0
     image_y = display.get_last_text_y() + 7
 
+    # Render weather icons (unchanged)
     img_paths = []
     for title in weather.titles:
         img_path = get_img_for_title(title)
@@ -124,26 +140,31 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
         show_image(display, img_path, image_x, image_y)
         image_x += IMAGE_DIM + 4
 
-    temp = f"{weather.temp.main:.1f} C"
+    temp = f"{weather.temp.main:.1f}°C"  # Use degree symbol
     title = sentence_join(weather.titles)
     desc = wrap_text(weather.description, display.get_max_text_width())
 
-    # render to the right of the image (image_x)
-    display.display_text_at_coordinates(
+    # LARGE font (24px) for temperature
+    display.display_text_bm_at_coordinates(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         image_x,
+        FontSize.LARGE,
         temp,
     )
 
     if show_min_max:
-        display.display_right(
+        min_max = f"L/H: {weather.temp.temp_min:.1f}-{weather.temp.temp_max:.1f}°C"
+        display.display_right_bm(
             DisplayController.RENDER_FLAG_APPEND_ONLY,
-            f"L/H: {weather.temp.temp_min:.1f}-{weather.temp.temp_max:.1f} C"
+            FontSize.SMALL,
+            min_max
         )
 
-    display.display_text_at_coordinates(
+    # SMALL font for title and description
+    display.display_text_bm_at_coordinates(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         image_x,
+        FontSize.SMALL,
         title,
         *desc,
     )

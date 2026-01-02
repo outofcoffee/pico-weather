@@ -32,6 +32,11 @@ class PaddingDisplayProxy(DisplayWrapper):
         return self._wrapped.width
 
     @property
+    def height(self) -> int:
+        """Returns the physical height of the display."""
+        return self._wrapped.height
+
+    @property
     def max_draw_width(self) -> int:
         """Returns the maximum drawable width accounting for padding."""
         return self.width - self._padding_left - self._padding_right
@@ -111,3 +116,11 @@ class PaddingDisplayProxy(DisplayWrapper):
     def blit(self, fb, x: int, y: int) -> None:
         """Blits a framebuffer to the display at the specified position with padding applied."""
         self._wrapped.blit(fb, x + self._padding_left, y + self._padding_top)
+
+    def scroll(self, dx: int, dy: int) -> None:
+        """Scrolls the framebuffer."""
+        self._wrapped.scroll(dx, dy)
+
+    def fill_rect(self, x: int, y: int, w: int, h: int, c: int) -> None:
+        """Fills a rectangle with padding applied."""
+        self._wrapped.fill_rect(x + self._padding_left, y + self._padding_top, w, h, c)

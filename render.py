@@ -22,11 +22,17 @@ class DisplayController:
 
     def __init__(self, epd: DisplayWrapper):
         self.epd = epd
+        self.font_renderer = None  # Lazy initialization
 
     def init(self):
         """
         Initializes the display.
         """
+        if self.font_renderer is None:
+            # Import here to avoid circular dependency
+            from font_renderer import FontRenderer
+            # Pass the DisplayWrapper directly - it now implements full FrameBuffer interface
+            self.font_renderer = FontRenderer(self.epd)
 
     def get_last_text_y(self) -> int:
         """
@@ -111,3 +117,52 @@ class DisplayController:
     def display_right(self, flags: int, text: str):
         padding = (self.get_max_text_width() - len(text)) * CHAR_WIDTH
         self.display_text_at_coordinates(flags | self.RENDER_FLAG_NO_V_CURSOR, padding, text)
+
+    def display_text_bm(self, render_flags: int, font_size: int, *lines: str):
+        """Display text using bitmap fonts."""
+        self.display_text_bm_at_coordinates(render_flags, 0, font_size, *lines)
+
+    def display_text_bm_at_coordinates(self, render_flags: int, x: int, font_size: int, *lines: str):
+        """Display text with bitmap fonts at specific coordinates."""
+        if render_flags & self.RENDER_FLAG_CLEAR:
+            self.epd.Clear()
+        if render_flags & self.RENDER_FLAG_BLANK:
+            self.epd.fill(0xff)
+            self.last_text_y = self.epd.draw_start_y
+
+        font_height = self.font_renderer.get_font_height(font_size)
+
+        for line in lines:
+            if render_flags & self.RENDER_FLAG_NO_V_CURSOR:
+                line_stride = 0
+            elif render_flags & self.RENDER_FLAG_THIN_PADDING:
+                line_stride = font_height + 2
+            else:
+                line_stride = font_height + 4
+
+            self.last_text_y += line_stride
+
+            # Adjust for padding (if PaddingDisplayProxy active)
+            adjusted_x = x
+            adjusted_y = self.last_text_y
+            if hasattr(self.epd, 'padding_left'):
+                adjusted_x += self.epd.padding_left
+            if hasattr(self.epd, 'padding_top'):
+                adjusted_y += self.epd.padding_top
+
+            self.font_renderer.set_position(adjusted_x, adjusted_y)
+            self.font_renderer.render_text(line, font_size)
+
+        if render_flags & self.RENDER_FLAG_FLUSH:
+            self.epd.display()
+
+    def display_right_bm(self, flags: int, font_size: int, text: str):
+        """Display right-aligned text with bitmap fonts."""
+        text_width = self.font_renderer.get_text_width(text, font_size)
+        padding = self.epd.max_draw_width - text_width
+        self.display_text_bm_at_coordinates(
+            flags | self.RENDER_FLAG_NO_V_CURSOR,
+            padding,
+            font_size,
+            text
+        )

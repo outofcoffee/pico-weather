@@ -35,6 +35,11 @@ class VirtualDisplayProxy(DisplayWrapper):
         return self._wrapped.width
 
     @property
+    def height(self) -> int:
+        """Returns the physical height of the display."""
+        return self._wrapped.height
+
+    @property
     def max_draw_width(self) -> int:
         """Returns the maximum drawable width accounting for padding."""
         return self._wrapped.max_draw_width
@@ -90,6 +95,12 @@ class VirtualDisplayProxy(DisplayWrapper):
             elif op_type == 'blit':
                 _, fb, x, y = op  # type: ignore
                 self._wrapped.blit(fb, x, y)
+            elif op_type == 'scroll':
+                _, dx, dy = op  # type: ignore
+                self._wrapped.scroll(dx, dy)
+            elif op_type == 'fill_rect':
+                _, x, y, w, h, c = op  # type: ignore
+                self._wrapped.fill_rect(x, y, w, h, c)
             elif op_type == 'display':
                 # Mark that we need to display, but don't call it yet
                 has_display_op = True
@@ -197,3 +208,17 @@ class VirtualDisplayProxy(DisplayWrapper):
             self._buffered_ops.append(('blit', fb, x, y))
         else:
             self._wrapped.blit(fb, x, y)
+
+    def scroll(self, dx: int, dy: int) -> None:
+        """Scrolls the framebuffer (virtual mode compatible)."""
+        if self._virtual_mode:
+            self._buffered_ops.append(('scroll', dx, dy))
+        else:
+            self._wrapped.scroll(dx, dy)
+
+    def fill_rect(self, x: int, y: int, w: int, h: int, c: int) -> None:
+        """Fills a rectangle (virtual mode compatible)."""
+        if self._virtual_mode:
+            self._buffered_ops.append(('fill_rect', x, y, w, h, c))
+        else:
+            self._wrapped.fill_rect(x, y, w, h, c)
