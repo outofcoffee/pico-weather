@@ -94,9 +94,9 @@ class DisplayController:
         """
         Renders a horizontal separator on the display.
         """
-        self.add_vertical_space(2)
-        self.epd.hline(1, self.get_last_text_y() + CHAR_WIDTH, self.epd.max_draw_width, 0x00)
-        self.add_vertical_space(2)
+        self.add_vertical_space(4)
+        self.epd.hline(1, self.last_text_y, self.epd.max_draw_width, 0x00)
+        self.add_vertical_space(4)
 
     def deep_sleep(self):
         """
