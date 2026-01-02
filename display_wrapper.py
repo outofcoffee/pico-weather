@@ -1,5 +1,5 @@
-from display_large import EPD_7in5_B
-from display_small import EPD_2in13_V3_Landscape
+from epd.Pico_ePaper_7_5_B import EPD_7in5_B
+from epd.Pico_ePaper_2_13_V3 import EPD_2in13_V3_Landscape
 
 
 class DisplayWrapper:
