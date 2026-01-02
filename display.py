@@ -103,7 +103,7 @@ class EPD_7in5_B_Wrapper(DisplayWrapper):
         self._epd.init()
 
     def Clear(self):
-        self._epd.Clear()
+        self._epd.ClearBlack()
 
     def display(self):
         self._epd.display()
