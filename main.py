@@ -154,8 +154,6 @@ def main():
     phy_epd = get_epd(config)
 
     epd = VirtualDisplayProxy(phy_epd)
-    epd.set_virtual_mode(True)
-
     display = DisplayController(epd)
 
     while True:

@@ -18,7 +18,7 @@ class VirtualDisplayProxy(DisplayWrapper):
     improving performance for e-paper displays.
     """
 
-    def __init__(self, wrapped_display: DisplayWrapper):
+    def __init__(self, wrapped_display: DisplayWrapper, virtual_mode = True):
         """
         Initializes the virtual display proxy.
 
@@ -26,7 +26,7 @@ class VirtualDisplayProxy(DisplayWrapper):
         """
         super().__init__()
         self._wrapped = wrapped_display
-        self._virtual_mode = False
+        self._virtual_mode = virtual_mode
         self._buffered_ops = []
 
     @property
@@ -39,17 +39,10 @@ class VirtualDisplayProxy(DisplayWrapper):
         """Returns the maximum drawable width accounting for padding."""
         return self._wrapped.max_draw_width
 
-    def add_padding(self, top: int, right: int, bottom: int, left: int) -> None:
-        """
-        Sets the padding for the display.
-
-        :param top: Top padding in pixels
-        :param right: Right padding in pixels
-        :param bottom: Bottom padding in pixels
-        :param left: Left padding in pixels
-        """
-        # Delegate padding to the wrapped display
-        self._wrapped.add_padding(top, right, bottom, left)
+    @property
+    def draw_start_y(self) -> int:
+        """Returns the Y coordinate where drawing should start."""
+        return self._wrapped.draw_start_y
 
     def set_virtual_mode(self, enabled: bool) -> None:
         """
@@ -89,15 +82,12 @@ class VirtualDisplayProxy(DisplayWrapper):
             elif op_type == 'fill':
                 self._wrapped.fill(op[1])
             elif op_type == 'text':
-                # Call public method - let wrapped display handle padding
                 _, s, x, y, c = op  # type: ignore
                 self._wrapped.text(s, x, y, c)
             elif op_type == 'hline':
-                # Call public method - let wrapped display handle padding
                 _, x, y, w, c = op  # type: ignore
                 self._wrapped.hline(x, y, w, c)
             elif op_type == 'blit':
-                # Call public method - let wrapped display handle padding
                 _, fb, x, y = op  # type: ignore
                 self._wrapped.blit(fb, x, y)
             elif op_type == 'display':
