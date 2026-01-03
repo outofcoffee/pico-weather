@@ -6,3 +6,4 @@ venv
 .claude/*.local.json
 .vscode/
 *.pyc
+.cache/

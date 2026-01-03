@@ -26,6 +26,7 @@ Options:
 import time
 import sys
 import os
+import hashlib
 from contextlib import suppress
 from typing import List, Iterable, TypeVar, Sequence, Set
 
@@ -37,6 +38,50 @@ __all__ = []
 
 verbose = False
 T = TypeVar('T')
+CACHE_DIR = '.cache'
+
+
+def calculate_file_hash(file_path: str) -> str:
+    """Calculate MD5 hash of a file."""
+    md5 = hashlib.md5()
+    with open(file_path, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
+
+
+def get_cache_path(file_path: str) -> str:
+    """Get the cache file path for a given file."""
+    return os.path.join(CACHE_DIR, file_path.replace(os.path.sep, '_') + '.md5')
+
+
+def read_cached_hash(cache_path: str) -> str:
+    """Read hash from cache file, return empty string if not found."""
+    try:
+        with open(cache_path, 'r') as f:
+            return f.read().strip()
+    except (FileNotFoundError, IOError):
+        return ''
+
+
+def write_cached_hash(cache_path: str, file_hash: str) -> None:
+    """Write hash to cache file."""
+    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+    with open(cache_path, 'w') as f:
+        f.write(file_hash)
+
+
+def should_upload_file(local_path: str) -> bool:
+    """Check if file should be uploaded based on hash comparison."""
+    current_hash = calculate_file_hash(local_path)
+    cache_path = get_cache_path(local_path)
+    cached_hash = read_cached_hash(cache_path)
+
+    if cached_hash == current_hash:
+        if verbose:
+            print('  [cached, skipping]', file=sys.stderr, flush=True)
+        return False
+    return True
 
 
 def main(args: List[str]) -> None:
@@ -48,6 +93,9 @@ def main(args: List[str]) -> None:
     chdir = opts['--chdir']
     if chdir:
         os.chdir(chdir)
+
+    # Ensure cache directory exists
+    os.makedirs(CACHE_DIR, exist_ok=True)
 
     port = opts['PORT']
     print('Connecting to {}'.format(port), file=sys.stderr)
@@ -71,14 +119,28 @@ def main(args: List[str]) -> None:
     for path in progress('Uploading files', to_upload):
         local_path = os.path.abspath(path)
         remote_path = os.path.normpath(path).replace(os.path.sep, '/')
+
         if verbose:
             print('\n{} -> {}'.format(local_path, remote_path),
-                  file=sys.stderr, flush=True)
+                  file=sys.stderr, end=' ', flush=True)
+
+        if not should_upload_file(local_path):
+            continue
+
         remote_dir = os.path.dirname(path)
         if remote_dir:
             make_dirs(files, remote_dir, created_cache)
+
         with open(local_path, 'rb') as fd:
             files.put(remote_path, fd.read())
+
+        # Update cache after successful upload
+        current_hash = calculate_file_hash(local_path)
+        cache_path = get_cache_path(local_path)
+        write_cached_hash(cache_path, current_hash)
+
+        if verbose:
+            print('[uploaded]', file=sys.stderr, flush=True)
 
     print('Soft reboot', file=sys.stderr, flush=True)
     soft_reset(board)

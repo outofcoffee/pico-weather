@@ -37,6 +37,29 @@ __all__ = []
 
 verbose = False
 T = TypeVar('T')
+CACHE_DIR = '.cache'
+
+
+def clear_cache() -> None:
+    """Remove all cache files from the .cache directory."""
+    if not os.path.exists(CACHE_DIR):
+        return
+
+    cache_files = []
+    for root, dirs, files in os.walk(CACHE_DIR):
+        for f in files:
+            if f.endswith('.md5'):
+                cache_files.append(os.path.join(root, f))
+
+    if cache_files:
+        print(f'Clearing {len(cache_files)} cache entries', file=sys.stderr)
+        for cache_file in cache_files:
+            try:
+                os.remove(cache_file)
+                if verbose:
+                    print(f'  Removed {cache_file}', file=sys.stderr)
+            except OSError as e:
+                print(f'  Failed to remove {cache_file}: {e}', file=sys.stderr)
 
 
 def main(args: List[str]) -> None:
@@ -61,6 +84,9 @@ def main(args: List[str]) -> None:
                 continue
             print(f"Deleting {f}")
             files.rm(f)
+
+    # Clear the upload cache since all files were deleted
+    clear_cache()
 
     print('Soft reboot', file=sys.stderr, flush=True)
     soft_reset(board)
