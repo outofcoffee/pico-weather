@@ -64,16 +64,8 @@ class DisplayController:
         font_height = self.font_renderer.get_font_height(font_size)
 
         for line in lines:
-            # Adjust for padding (if PaddingDisplayProxy active)
-            adjusted_x = x
-            adjusted_y = self.last_text_y
-            if hasattr(self.epd, 'padding_left'):
-                adjusted_x += self.epd.padding_left
-            if hasattr(self.epd, 'padding_top'):
-                adjusted_y += self.epd.padding_top
-
             # Render the line at current position
-            self.font_renderer.set_position(adjusted_x, adjusted_y)
+            self.font_renderer.set_position(x, self.last_text_y)
             self.font_renderer.render_text(line, font_size)
 
             # Advance cursor for next line (unless NO_V_CURSOR flag is set)
