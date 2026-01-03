@@ -1,6 +1,7 @@
 import framebuf
 
 from display import DisplayWrapper
+from font_renderer import FontRenderer
 
 # pixel width of a character
 CHAR_WIDTH = 8
@@ -29,9 +30,6 @@ class DisplayController:
         Initializes the display.
         """
         if self.font_renderer is None:
-            # Import here to avoid circular dependency
-            from font_renderer import FontRenderer
-            # Pass the DisplayWrapper directly - it now implements full FrameBuffer interface
             self.font_renderer = FontRenderer(self.epd)
 
     def get_last_text_y(self) -> int:
