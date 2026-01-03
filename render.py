@@ -1,10 +1,7 @@
 import framebuf
 
 from display import DisplayWrapper
-from font_renderer import FontRenderer
-
-# pixel width of a character
-CHAR_WIDTH = 8
+from font_renderer import FontRenderer, FontSize
 
 
 class DisplayController:
@@ -21,16 +18,17 @@ class DisplayController:
 
     last_text_y = 0
 
-    def __init__(self, epd: DisplayWrapper):
+    def __init__(self, epd: DisplayWrapper, font_renderer: FontRenderer = None):
         self.epd = epd
-        self.font_renderer = None  # Lazy initialization
+        self.font_renderer = font_renderer  # Will be set during init()
 
     def init(self):
         """
         Initializes the display.
         """
+        # font_renderer should be injected before calling init()
         if self.font_renderer is None:
-            self.font_renderer = FontRenderer(self.epd)
+            raise ValueError("font_renderer must be set before calling init()")
 
     def get_last_text_y(self) -> int:
         """
@@ -40,19 +38,22 @@ class DisplayController:
 
     def get_max_text_width(self) -> int:
         """
-        Returns the maximum number of characters that can fit on a line.
+        Returns the maximum number of characters that can fit on a line (for BasicTextRenderer).
+        For RichTextRenderer, this is approximate.
         """
-        return self.epd.max_draw_width // CHAR_WIDTH
+        # Use font renderer's character width (8 for basic, varies for rich)
+        char_width = self.font_renderer.get_text_width("W", FontSize.SMALL)
+        return self.epd.max_draw_width // char_width
 
-    def display_text(self, render_flags: int, *lines: str):
+    def display_text(self, render_flags: int, font_size: int, *lines: str):
         """
         Displays the given lines of text on the e-ink display, optionally appending to the existing display.
         """
-        self.display_text_at_coordinates(render_flags, 0, *lines)
+        self.display_text_at_coordinates(render_flags, 0, font_size, *lines)
 
-    def display_text_at_coordinates(self, render_flags: int, x: int, *lines: str):
+    def display_text_at_coordinates(self, render_flags: int, x: int, font_size: int, *lines: str):
         """
-        Displays the given lines of text on the e-ink display, optionally appending to the existing display.
+        Displays the given lines of text at specified coordinates.
         """
         if render_flags & self.RENDER_FLAG_CLEAR:
             self.epd.Clear()
@@ -60,17 +61,28 @@ class DisplayController:
             self.epd.fill(0xff)
             self.last_text_y = self.epd.draw_start_y
 
-        line_stride: int
-        for line in lines:
-            if render_flags & self.RENDER_FLAG_NO_V_CURSOR:
-                line_stride = 0
-            elif render_flags & self.RENDER_FLAG_THIN_PADDING:
-                line_stride = 8
-            else:
-                line_stride = 10
+        font_height = self.font_renderer.get_font_height(font_size)
 
-            self.last_text_y += line_stride
-            self.epd.text(line, x, self.last_text_y, 0x00)
+        for line in lines:
+            # Adjust for padding (if PaddingDisplayProxy active)
+            adjusted_x = x
+            adjusted_y = self.last_text_y
+            if hasattr(self.epd, 'padding_left'):
+                adjusted_x += self.epd.padding_left
+            if hasattr(self.epd, 'padding_top'):
+                adjusted_y += self.epd.padding_top
+
+            # Render the line at current position
+            self.font_renderer.set_position(adjusted_x, adjusted_y)
+            self.font_renderer.render_text(line, font_size)
+
+            # Advance cursor for next line (unless NO_V_CURSOR flag is set)
+            if not (render_flags & self.RENDER_FLAG_NO_V_CURSOR):
+                if render_flags & self.RENDER_FLAG_THIN_PADDING:
+                    line_stride = font_height + 2
+                else:
+                    line_stride = font_height + 4
+                self.last_text_y += line_stride
 
         if render_flags & self.RENDER_FLAG_FLUSH:
             self.epd.display()
@@ -112,53 +124,11 @@ class DisplayController:
         """
         self.epd.blit(fb, x, y)
 
-    def display_right(self, flags: int, text: str):
-        padding = (self.get_max_text_width() - len(text)) * CHAR_WIDTH
-        self.display_text_at_coordinates(flags | self.RENDER_FLAG_NO_V_CURSOR, padding, text)
-
-    def display_text_bm(self, render_flags: int, font_size: int, *lines: str):
-        """Display text using bitmap fonts."""
-        self.display_text_bm_at_coordinates(render_flags, 0, font_size, *lines)
-
-    def display_text_bm_at_coordinates(self, render_flags: int, x: int, font_size: int, *lines: str):
-        """Display text with bitmap fonts at specific coordinates."""
-        if render_flags & self.RENDER_FLAG_CLEAR:
-            self.epd.Clear()
-        if render_flags & self.RENDER_FLAG_BLANK:
-            self.epd.fill(0xff)
-            self.last_text_y = self.epd.draw_start_y
-
-        font_height = self.font_renderer.get_font_height(font_size)
-
-        for line in lines:
-            # Adjust for padding (if PaddingDisplayProxy active)
-            adjusted_x = x
-            adjusted_y = self.last_text_y
-            if hasattr(self.epd, 'padding_left'):
-                adjusted_x += self.epd.padding_left
-            if hasattr(self.epd, 'padding_top'):
-                adjusted_y += self.epd.padding_top
-
-            # Render the line at current position
-            self.font_renderer.set_position(adjusted_x, adjusted_y)
-            self.font_renderer.render_text(line, font_size)
-
-            # Advance cursor for next line (unless NO_V_CURSOR flag is set)
-            if not (render_flags & self.RENDER_FLAG_NO_V_CURSOR):
-                if render_flags & self.RENDER_FLAG_THIN_PADDING:
-                    line_stride = font_height + 2
-                else:
-                    line_stride = font_height + 4
-                self.last_text_y += line_stride
-
-        if render_flags & self.RENDER_FLAG_FLUSH:
-            self.epd.display()
-
-    def display_right_bm(self, flags: int, font_size: int, text: str):
-        """Display right-aligned text with bitmap fonts."""
+    def display_right(self, flags: int, font_size: int, text: str):
+        """Display right-aligned text."""
         text_width = self.font_renderer.get_text_width(text, font_size)
         padding = self.epd.max_draw_width - text_width
-        self.display_text_bm_at_coordinates(
+        self.display_text_at_coordinates(
             flags | self.RENDER_FLAG_NO_V_CURSOR,
             padding,
             font_size,

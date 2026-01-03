@@ -11,6 +11,65 @@ class FontSize:
     LARGE = 24   # Temperatures
 
 
+class FontRenderer:
+    """Abstract base class for text rendering."""
+
+    def render_text(self, text: str, font_size: int) -> int:
+        """Render text at current cursor position. Returns height of rendered text."""
+        raise NotImplementedError
+
+    def get_text_width(self, text: str, font_size: int) -> int:
+        """Calculate pixel width of text without rendering."""
+        raise NotImplementedError
+
+    def get_font_height(self, font_size: int) -> int:
+        """Get font height in pixels."""
+        raise NotImplementedError
+
+    def set_position(self, x: int, y: int):
+        """Set text cursor position."""
+        raise NotImplementedError
+
+    def get_current_position(self) -> tuple:
+        """Get current cursor position as (x, y)."""
+        raise NotImplementedError
+
+
+class BasicTextRenderer(FontRenderer):
+    """Basic text renderer using DisplayWrapper's built-in text() method."""
+
+    # Fixed 8-pixel character width for built-in font
+    CHAR_WIDTH = 8
+    CHAR_HEIGHT = 8
+
+    def __init__(self, display_wrapper):
+        self._display = display_wrapper
+        self._cursor_x = 0
+        self._cursor_y = 0
+
+    def render_text(self, text: str, font_size: int = FontSize.SMALL) -> int:
+        """Render text using epd.text(). font_size is ignored."""
+        self._display.text(text, self._cursor_x, self._cursor_y, 0x00)
+        return self.CHAR_HEIGHT
+
+    def get_text_width(self, text: str, font_size: int = FontSize.SMALL) -> int:
+        """Calculate pixel width. font_size is ignored."""
+        return len(text) * self.CHAR_WIDTH
+
+    def get_font_height(self, font_size: int = FontSize.SMALL) -> int:
+        """Returns fixed height. font_size is ignored."""
+        return self.CHAR_HEIGHT
+
+    def set_position(self, x: int, y: int):
+        """Set text cursor position."""
+        self._cursor_x = x
+        self._cursor_y = y
+
+    def get_current_position(self) -> tuple:
+        """Get current cursor position as (x, y)."""
+        return (self._cursor_x, self._cursor_y)
+
+
 class FrameBufferAdapter(framebuf.FrameBuffer):
     """Adapter that makes DisplayWrapper compatible with Writer's isinstance check."""
 
@@ -38,8 +97,8 @@ class FrameBufferAdapter(framebuf.FrameBuffer):
         self._display.fill_rect(x, y, w, h, c)
 
 
-class FontRenderer:
-    """Wrapper around Writer class for DisplayController integration."""
+class RichTextRenderer(FontRenderer):
+    """Rich text renderer using Writer class with bitmap fonts."""
 
     def __init__(self, display_wrapper):
         # Wrap the display in a FrameBuffer adapter for Writer compatibility
@@ -69,3 +128,10 @@ class FontRenderer:
         """Get font height in pixels."""
         writer = self._writers.get(font_size, self._writers[FontSize.SMALL])
         return writer.height
+
+    def get_current_position(self) -> tuple:
+        """Get current cursor position (col, row) from Writer state."""
+        state = Writer.state.get(id(self._fb))
+        if state:
+            return (state.text_col, state.text_row)
+        return (0, 0)

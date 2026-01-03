@@ -3,7 +3,7 @@ import machine
 import utime
 
 from display import get_epd
-from font_renderer import FontSize
+from font_renderer import FontSize, RichTextRenderer
 from images import show_image, IMAGE_DIM
 from net import connect_to_network, disconnect
 from render import DisplayController
@@ -31,6 +31,7 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
 
     display.display_text(
         DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_FLUSH,
+        FontSize.SMALL,
         f"Connecting to {config.ssid}..."
     )
 
@@ -42,6 +43,7 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
 
     display.display_text(
         DisplayController.RENDER_FLAG_FLUSH,
+        FontSize.SMALL,
         "Connected",
         f"IP: {ip}"
     )
@@ -52,6 +54,7 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
         print(f"error fetching weather: {e}")
         display.display_text(
             DisplayController.RENDER_FLAG_FLUSH,
+            FontSize.SMALL,
             "Failed to fetch weather",
             f"Cause: {e}"
         )
@@ -81,14 +84,14 @@ def render(display: DisplayController, current: Weather, daily: Weather):
     weather_date = format_date(current.dt)
 
     # MEDIUM font (20px) for "NOW" header
-    display.display_text_bm(
+    display.display_text(
         DisplayController.RENDER_FLAG_CLEAR | DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_THIN_PADDING,
         FontSize.MEDIUM,
         "NOW"
     )
 
     # Right-align date with SMALL font (18px)
-    display.display_right_bm(
+    display.display_right(
         DisplayController.RENDER_FLAG_APPEND_ONLY | DisplayController.RENDER_FLAG_NO_V_CURSOR,
         FontSize.SMALL,
         weather_date
@@ -99,7 +102,7 @@ def render(display: DisplayController, current: Weather, daily: Weather):
     display.render_horizontal_separator()
 
     # MEDIUM font for "TODAY" header
-    display.display_text_bm(
+    display.display_text(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         FontSize.MEDIUM,
         "TODAY"
@@ -108,7 +111,7 @@ def render(display: DisplayController, current: Weather, daily: Weather):
 
     # SMALL font for body text
     today_summary = truncate_lines(daily.day_summary, 3)
-    display.display_text_bm(
+    display.display_text(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         FontSize.SMALL,
         *today_summary
@@ -145,7 +148,7 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
     desc = wrap_text(weather.description, display.get_max_text_width())
 
     # LARGE font (24px) for temperature
-    display.display_text_bm_at_coordinates(
+    display.display_text_at_coordinates(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         image_x,
         FontSize.LARGE,
@@ -154,14 +157,14 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
 
     if show_min_max:
         min_max = f"L/H: {weather.temp.temp_min:.1f}-{weather.temp.temp_max:.1f}°C"
-        display.display_right_bm(
+        display.display_right(
             DisplayController.RENDER_FLAG_APPEND_ONLY,
             FontSize.SMALL,
             min_max
         )
 
     # SMALL font for title and description
-    display.display_text_bm_at_coordinates(
+    display.display_text_at_coordinates(
         DisplayController.RENDER_FLAG_APPEND_ONLY,
         image_x,
         FontSize.SMALL,
@@ -177,7 +180,9 @@ def main():
     epd = VirtualDisplayProxy(phy_epd)
     epd.init()
 
-    display = DisplayController(epd)
+    # Create font renderer and inject into display controller
+    font_renderer = RichTextRenderer(epd)
+    display = DisplayController(epd, font_renderer)
     display.init()
 
     while True:
