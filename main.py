@@ -177,8 +177,7 @@ def main():
     config = read_config()
     phy_epd = get_epd(config)
 
-    epd = VirtualDisplayProxy(phy_epd)
-    epd.init()
+    epd = VirtualDisplayProxy(phy_epd, virtual_mode=False)
 
     # Create font renderer and inject into display controller
     font_renderer = RichTextRenderer(epd)
@@ -186,6 +185,9 @@ def main():
     display.init()
 
     while True:
+        # we need to re-init after deep sleep
+        epd.init()
+
         # buffer writes to the display
         epd.set_virtual_mode(True)
 
