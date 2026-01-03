@@ -226,7 +226,7 @@ def cache_weather(weather: Weather, timeframe: str):
         f.write(str(utime.time()))
 
 
-def load_cached_weather(timeframe: str, cache_mins: int) -> Weather:
+def load_cached_weather(timeframe: str, cache_mins: int) -> Weather | None:
     """
     Returns the cached weather, or None if no cache exists.
     :param timeframe: the timeframe

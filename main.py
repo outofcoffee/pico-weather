@@ -20,10 +20,10 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
     :param display: the display controller
     :return: the current and daily weather
     """
-    current: Weather = load_cached_weather('current', config.cache_mins)
-    daily: Weather = load_cached_weather('daily', config.cache_mins)
+    current: Weather | None = load_cached_weather('current', config.cache_mins)
+    daily: Weather | None = load_cached_weather('daily', config.cache_mins)
 
-    if all([current, daily]):
+    if current is not None and daily is not None:
         print(f"using cached weather")
         return current, daily
     else:
@@ -63,10 +63,10 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
         # we don't need the network anymore
         disconnect(wlan)
 
-        if not all([current, daily]):
-            print(f"Sleeping for 5 minutes then resetting the device")
-            utime.sleep(300)
-            machine.reset()
+    if current is None or daily is None:
+        print(f"Unable to fetch - sleeping for 5 minutes then resetting the device")
+        utime.sleep(300)
+        machine.reset()
 
     cache_weather(current, 'current')
     cache_weather(daily, 'daily')
