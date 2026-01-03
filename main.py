@@ -1,4 +1,4 @@
-from display_proxy import VirtualDisplayProxy
+from display_virtual import VirtualDisplayProxy
 import machine
 import utime
 
@@ -154,10 +154,15 @@ def main():
     phy_epd = get_epd(config)
 
     epd = VirtualDisplayProxy(phy_epd)
+    epd.init()
+
     display = DisplayController(epd)
+    display.init()
 
     while True:
-        display.init()
+        # buffer writes to the display
+        epd.set_virtual_mode(True)
+
         current, daily = fetch(config, display)
         render(display, current, daily)
 

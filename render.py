@@ -27,7 +27,6 @@ class DisplayController:
         """
         Initializes the display.
         """
-        self.epd.init()
 
     def get_last_text_y(self) -> int:
         """
