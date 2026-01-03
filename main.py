@@ -145,7 +145,7 @@ def render_weather(display: DisplayController, weather: Weather, show_min_max: b
 
     temp = f"{weather.temp.main:.1f}°C"  # Use degree symbol
     title = sentence_join(weather.titles)
-    desc = wrap_text(weather.description, display.get_max_text_width())
+    desc = wrap_text(weather.description, display.get_max_line_length())
 
     # LARGE font (24px) for temperature
     display.display_text_at_coordinates(

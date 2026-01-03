@@ -36,12 +36,10 @@ class DisplayController:
         """
         return self.last_text_y
 
-    def get_max_text_width(self) -> int:
+    def get_max_line_length(self) -> int:
         """
-        Returns the maximum number of characters that can fit on a line (for BasicTextRenderer).
-        For RichTextRenderer, this is approximate.
+        Returns the maximum number of characters that can fit on a line.
         """
-        # Use font renderer's character width (8 for basic, varies for rich)
         char_width = self.font_renderer.get_text_width("W", FontSize.SMALL)
         return self.epd.max_draw_width // char_width
 
