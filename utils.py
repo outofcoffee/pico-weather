@@ -53,14 +53,53 @@ def format_date(dt: int) -> str:
     return f"{dtup[2]} {formatted} {dtup[3]:02d}:{dtup[4]:02d}"
 
 
-def wrap_text(text: str, max_width: int) -> list[str]:
+def wrap_text(text: str, max_length: int) -> list[str]:
     """
-    Wraps the given text to the given maximum width.
-    :param text:
-    :param max_width:
-    :return:
+    Wraps the given text to the given maximum width, respecting word boundaries.
+    If a word is too long to fit on a line, it will be hyphenated.
+    :param text: the text to wrap
+    :param max_length: the maximum length in characters
+    :return: list of wrapped lines
     """
-    return [text[idx:idx + max_width].strip() for idx in range(0, len(text), max_width)]
+    if max_length < 2:
+        print(f"wrap_text: max_width too small, returning as-is")
+        return [text]
+
+    lines = []
+    words = text.split()
+    current_line = ""
+
+    for word in words:
+        # Check if adding this word would exceed max_width
+        test_line = word if not current_line else current_line + " " + word
+
+        if len(test_line) <= max_length:
+            current_line = test_line
+        else:
+            # Word doesn't fit on current line
+            if current_line:
+                # Save current line and start new one
+                lines.append(current_line)
+                current_line = ""
+
+            # Handle word that's too long for a single line
+            if len(word) > max_length:
+                # Break word with hyphenation
+                while len(word) > max_length:
+                    # Reserve one character for hyphen
+                    chunk_size = max_length - 1
+                    chunk = word[:chunk_size] + "-"
+                    lines.append(chunk)
+                    word = word[chunk_size:]
+                current_line = word
+            else:
+                current_line = word
+
+    # Add any remaining text
+    if current_line:
+        lines.append(current_line)
+
+    return lines if lines else [""]
 
 
 def read_config() -> Config:
