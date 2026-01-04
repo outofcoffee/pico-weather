@@ -17,6 +17,11 @@ cache_mins=10
 display_size=small
 # display_size=large
 
+# Optional: Text renderer - 'basic' (8x8 built-in font, faster) or 'rich' (bitmap fonts, better quality)
+# If not specified, defaults to 'basic'
+# text_renderer=basic
+# text_renderer=rich
+
 # Optional: Display padding in pixels (top,right,bottom,left)
 # If not specified, defaults to (0,2,0,0) i.e. small right margin
 # padding=10,10,10,10

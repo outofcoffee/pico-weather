@@ -1,3 +1,4 @@
+from screen import Screen
 from writer import Writer
 import fonts.freesans18 as freesans18
 import fonts.freesans20 as freesans20
@@ -42,7 +43,7 @@ class BasicTextRenderer(FontRenderer):
     CHAR_WIDTH = 8
     CHAR_HEIGHT = 8
 
-    def __init__(self, screen):
+    def __init__(self, screen: Screen):
         self._screen = screen
         self._cursor_x = 0
         self._cursor_y = 0
@@ -73,7 +74,7 @@ class BasicTextRenderer(FontRenderer):
 class FrameBufferAdapter(framebuf.FrameBuffer):
     """Adapter that makes Screen compatible with Writer's isinstance check."""
 
-    def __init__(self, screen):
+    def __init__(self, screen: Screen):
         # Create a minimal 1-byte buffer to satisfy FrameBuffer.__init__
         # We won't actually use this buffer - all operations delegate to screen
         super().__init__(bytearray(1), 1, 1, framebuf.MONO_HLSB)
@@ -100,7 +101,7 @@ class FrameBufferAdapter(framebuf.FrameBuffer):
 class RichTextRenderer(FontRenderer):
     """Rich text renderer using Writer class with bitmap fonts."""
 
-    def __init__(self, screen):
+    def __init__(self, screen: Screen):
         # Wrap the display in a FrameBuffer adapter for Writer compatibility
         self._fb = FrameBufferAdapter(screen)
         self._writers = {
@@ -135,3 +136,19 @@ class RichTextRenderer(FontRenderer):
         if state:
             return (state.text_col, state.text_row)
         return (0, 0)
+
+
+def get_font_renderer(config, screen) -> FontRenderer:
+    """Factory function to create appropriate font renderer based on config.
+
+    Args:
+        config: Config object with text_renderer property
+        screen: Screen instance on which to render
+
+    Returns:
+        FontRenderer instance (BasicTextRenderer or RichTextRenderer)
+    """
+    if config.text_renderer == 'rich':
+        return RichTextRenderer(screen)
+    else:
+        return BasicTextRenderer(screen)

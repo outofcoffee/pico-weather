@@ -8,6 +8,7 @@ class Config:
     cache_mins: int
     display_size: str
     padding: tuple[int, int, int, int] | None
+    text_renderer: str
 
 
 def read_config() -> Config:
@@ -17,6 +18,7 @@ def read_config() -> Config:
     """
     config = Config()
     config.padding = None
+    config.text_renderer = 'basic'
 
     with open('config.txt') as f:
         for line in f:
@@ -44,5 +46,7 @@ def read_config() -> Config:
                 parts = padding_str.split(',')
                 if len(parts) == 4:
                     config.padding = (int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]))
+            elif line.startswith('text_renderer='):
+                config.text_renderer = line[14:].strip()
 
     return config

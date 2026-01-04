@@ -5,7 +5,7 @@ import machine
 import utime
 
 from display import get_epd
-from font_renderer import FontSize, RichTextRenderer
+from font_renderer import FontSize, get_font_renderer
 from net import connect_to_network, disconnect
 from display import DisplayController
 from config import read_config
@@ -81,7 +81,7 @@ def main():
     phy_epd = get_epd(config)
     epd = BufferedScreen(phy_epd, virtual_mode=False)
 
-    font_renderer = RichTextRenderer(epd)
+    font_renderer = get_font_renderer(config, epd)
 
     display = DisplayController(epd, font_renderer)
     display.init()
