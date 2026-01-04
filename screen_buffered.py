@@ -1,9 +1,9 @@
-from display import DisplayWrapper
+from screen import Screen
 
 
-class VirtualDisplayProxy(DisplayWrapper):
+class BufferedScreen(Screen):
     """
-    A proxy wrapper for DisplayWrapper that buffers display operations in virtual mode.
+    A proxy wrapper for Screen that buffers display operations in virtual mode.
 
     In virtual mode, this proxy buffers all drawing operations (text, hline, blit, fill),
     as well as calls to display(), Clear(), sleep(), and delay_ms().
@@ -18,14 +18,14 @@ class VirtualDisplayProxy(DisplayWrapper):
     improving performance for e-paper displays.
     """
 
-    def __init__(self, wrapped_display: DisplayWrapper, virtual_mode = True):
+    def __init__(self, wrapped_screen: Screen, virtual_mode = True):
         """
         Initializes the virtual display proxy.
 
-        :param wrapped_display: The underlying DisplayWrapper instance to proxy
+        :param wrapped_screen: The underlying Screen instance to proxy
         """
         super().__init__()
-        self._wrapped = wrapped_display
+        self._wrapped = wrapped_screen
         self._virtual_mode = virtual_mode
         self._buffered_ops = []
 

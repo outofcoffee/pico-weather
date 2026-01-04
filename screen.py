@@ -2,7 +2,7 @@ from epd.Pico_ePaper_7_5_B import EPD_7in5_B
 from epd.Pico_ePaper_2_13_V3 import EPD_2in13_V3_Landscape
 
 
-class DisplayWrapper:
+class Screen:
     """Base wrapper interface for EPD displays."""
 
     @property
@@ -70,7 +70,7 @@ class DisplayWrapper:
         raise NotImplementedError
 
 
-class EPD_7in5_B_Wrapper(DisplayWrapper):
+class EPD_7in5_B_Wrapper(Screen):
     """Wrapper for EPD_7in5_B that passes through all calls without change."""
 
     def __init__(self):
@@ -120,7 +120,7 @@ class EPD_7in5_B_Wrapper(DisplayWrapper):
         self._epd.imageblack.fill_rect(x, y, w, h, c)
 
 
-class EPD_2in13_V3_Wrapper(DisplayWrapper):
+class EPD_2in13_V3_Wrapper(Screen):
     """Wrapper for EPD_2in13_V3_Landscape that adapts its interface."""
 
     def __init__(self):

@@ -4,7 +4,7 @@ import json
 import os
 import utime
 
-from render import DisplayController
+from display import DisplayController
 from utils import wrap_text, sentence_join, ensure_suffix, dir_exists, file_exists
 
 

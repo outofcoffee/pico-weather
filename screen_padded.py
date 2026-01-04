@@ -1,7 +1,7 @@
-from display import DisplayWrapper
+from screen import Screen
 
 
-class PaddingDisplayProxy(DisplayWrapper):
+class PaddedScreen(Screen):
     """
     A proxy wrapper that applies padding to drawing operations.
 
@@ -9,17 +9,17 @@ class PaddingDisplayProxy(DisplayWrapper):
     coordinates by the configured padding values before forwarding to the wrapped display.
 
     This allows padding logic to be applied once in a single place, rather than being
-    duplicated in each display wrapper implementation.
+    duplicated in each screen implementation.
     """
 
-    def __init__(self, wrapped_display: DisplayWrapper):
+    def __init__(self, wrapped_screen: Screen):
         """
         Initializes the padding display proxy.
 
-        :param wrapped_display: The underlying DisplayWrapper instance to proxy
+        :param wrapped_screen: The underlying Screen instance to proxy
         """
         super().__init__()
-        self._wrapped = wrapped_display
+        self._wrapped = wrapped_screen
         # Default padding preserves existing 2px right margin
         self._padding_top = 0
         self._padding_right = 2  # Preserve legacy 2px margin

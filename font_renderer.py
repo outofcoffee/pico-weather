@@ -36,20 +36,20 @@ class FontRenderer:
 
 
 class BasicTextRenderer(FontRenderer):
-    """Basic text renderer using DisplayWrapper's built-in text() method."""
+    """Basic text renderer using Screen's built-in text() method."""
 
     # Fixed 8-pixel character width for built-in font
     CHAR_WIDTH = 8
     CHAR_HEIGHT = 8
 
-    def __init__(self, display_wrapper):
-        self._display = display_wrapper
+    def __init__(self, screen):
+        self._screen = screen
         self._cursor_x = 0
         self._cursor_y = 0
 
     def render_text(self, text: str, font_size: int = FontSize.SMALL) -> int:
         """Render text using epd.text(). font_size is ignored."""
-        self._display.text(text, self._cursor_x, self._cursor_y, 0x00)
+        self._screen.text(text, self._cursor_x, self._cursor_y, 0x00)
         return self.CHAR_HEIGHT
 
     def get_text_width(self, text: str, font_size: int = FontSize.SMALL) -> int:
@@ -71,38 +71,38 @@ class BasicTextRenderer(FontRenderer):
 
 
 class FrameBufferAdapter(framebuf.FrameBuffer):
-    """Adapter that makes DisplayWrapper compatible with Writer's isinstance check."""
+    """Adapter that makes Screen compatible with Writer's isinstance check."""
 
-    def __init__(self, display_wrapper):
+    def __init__(self, screen):
         # Create a minimal 1-byte buffer to satisfy FrameBuffer.__init__
-        # We won't actually use this buffer - all operations delegate to display_wrapper
+        # We won't actually use this buffer - all operations delegate to screen
         super().__init__(bytearray(1), 1, 1, framebuf.MONO_HLSB)
-        self._display = display_wrapper
+        self._screen = screen
 
     @property
     def width(self):
-        return self._display.width
+        return self._screen.width
 
     @property
     def height(self):
-        return self._display.height
+        return self._screen.height
 
     def blit(self, fb, x, y):
-        self._display.blit(fb, x, y)
+        self._screen.blit(fb, x, y)
 
     def scroll(self, dx, dy):
-        self._display.scroll(dx, dy)
+        self._screen.scroll(dx, dy)
 
     def fill_rect(self, x, y, w, h, c):
-        self._display.fill_rect(x, y, w, h, c)
+        self._screen.fill_rect(x, y, w, h, c)
 
 
 class RichTextRenderer(FontRenderer):
     """Rich text renderer using Writer class with bitmap fonts."""
 
-    def __init__(self, display_wrapper):
+    def __init__(self, screen):
         # Wrap the display in a FrameBuffer adapter for Writer compatibility
-        self._fb = FrameBufferAdapter(display_wrapper)
+        self._fb = FrameBufferAdapter(screen)
         self._writers = {
             FontSize.SMALL: Writer(self._fb, freesans18, verbose=False),
             FontSize.MEDIUM: Writer(self._fb, freesans20, verbose=False),

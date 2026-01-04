@@ -1,14 +1,15 @@
-from display_virtual import VirtualDisplayProxy
+from config import Config
+from render import render
+from screen_buffered import BufferedScreen
 import machine
 import utime
 
 from display import get_epd
 from font_renderer import FontSize, RichTextRenderer
-from images import show_image, IMAGE_DIM
 from net import connect_to_network, disconnect
-from render import DisplayController
-from utils import format_date, read_config, wrap_text, sentence_join, Config, truncate_lines
-from weather import get_img_for_title, Weather, load_cached_weather, fetch_weather, \
+from display import DisplayController
+from config import read_config
+from weather import Weather, load_cached_weather, fetch_weather, \
     cache_weather
 
 
@@ -74,113 +75,14 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
     return current, daily
 
 
-def render(display: DisplayController, current: Weather, daily: Weather):
-    """
-    Renders the given weather on the display.
-    :param display: the display controller
-    :param current: the current weather
-    :param daily: the daily weather
-    """
-    weather_date = format_date(current.dt)
-
-    # MEDIUM font (20px) for "NOW" header
-    display.display_text(
-        DisplayController.RENDER_FLAG_CLEAR | DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_THIN_PADDING,
-        FontSize.MEDIUM,
-        "NOW"
-    )
-
-    # Right-align date with SMALL font (18px)
-    display.display_right(
-        DisplayController.RENDER_FLAG_APPEND_ONLY | DisplayController.RENDER_FLAG_NO_V_CURSOR,
-        FontSize.SMALL,
-        weather_date
-    )
-
-    render_weather(display, current)
-
-    display.render_horizontal_separator()
-
-    # MEDIUM font for "TODAY" header
-    display.display_text(
-        DisplayController.RENDER_FLAG_APPEND_ONLY,
-        FontSize.MEDIUM,
-        "TODAY"
-    )
-    display.add_vertical_space(2)
-
-    # SMALL font for body text
-    today_summary = truncate_lines(daily.day_summary, 3)
-    display.display_text(
-        DisplayController.RENDER_FLAG_APPEND_ONLY,
-        FontSize.SMALL,
-        *today_summary
-    )
-    display.add_vertical_space(4)
-    render_weather(display, daily, show_min_max=True)
-
-    display.flush_display()
-
-
-def render_weather(display: DisplayController, weather: Weather, show_min_max: bool = False):
-    """
-    Renders the given weather on the display.
-    :param display: the display controller
-    :param weather: the weather
-    :param show_min_max: whether to show the min/max temperatures
-    """
-    image_x = 0
-    image_y = display.get_last_text_y() + 7
-
-    # Render weather icons (unchanged)
-    img_paths = []
-    for title in weather.titles:
-        img_path = get_img_for_title(title)
-        if img_path:
-            img_paths.append(img_path)
-
-    for img_path in set(img_paths):
-        show_image(display, img_path, image_x, image_y)
-        image_x += IMAGE_DIM + 4
-
-    temp = f"{weather.temp.main:.1f}°C"  # Use degree symbol
-    title = sentence_join(weather.titles)
-    desc = wrap_text(weather.description, display.get_max_line_length())
-
-    # LARGE font (24px) for temperature
-    display.display_text_at_coordinates(
-        DisplayController.RENDER_FLAG_APPEND_ONLY,
-        image_x,
-        FontSize.LARGE,
-        temp,
-    )
-
-    if show_min_max:
-        min_max = f"L/H: {weather.temp.temp_min:.1f}-{weather.temp.temp_max:.1f}°C"
-        display.display_right(
-            DisplayController.RENDER_FLAG_APPEND_ONLY,
-            FontSize.SMALL,
-            min_max
-        )
-
-    # SMALL font for title and description
-    display.display_text_at_coordinates(
-        DisplayController.RENDER_FLAG_APPEND_ONLY,
-        image_x,
-        FontSize.SMALL,
-        title,
-        *desc,
-    )
-
-
 def main():
     config = read_config()
+ 
     phy_epd = get_epd(config)
+    epd = BufferedScreen(phy_epd, virtual_mode=False)
 
-    epd = VirtualDisplayProxy(phy_epd, virtual_mode=False)
-
-    # Create font renderer and inject into display controller
     font_renderer = RichTextRenderer(epd)
+
     display = DisplayController(epd, font_renderer)
     display.init()
 

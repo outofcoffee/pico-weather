@@ -1,6 +1,6 @@
 import framebuf
 
-from render import DisplayController
+from display import DisplayController
 
 IMAGE_DIM = 32
 
