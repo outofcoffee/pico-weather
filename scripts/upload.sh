@@ -14,6 +14,7 @@ if [[ $# -eq 0 ]]; then
   FILES_TO_UPLOAD=$(ls *.py)
   FILES_TO_UPLOAD+=" $(ls epd/*.py)"
   FILES_TO_UPLOAD+=" $(ls fonts/*.py)"
+  FILES_TO_UPLOAD+=" $(ls lib/*.py)"
   FILES_TO_UPLOAD+=" config.txt"
 else
   FILES_TO_UPLOAD="$@"
