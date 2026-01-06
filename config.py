@@ -1,8 +1,10 @@
 class Config:
     ssid: str
     password: str
-    lat: str
-    lon: str
+    lat: str | None
+    lon: str | None
+    zip: str | None
+    country: str | None
     openweathermap_key: str
     refresh_mins: int
     cache_mins: int
@@ -17,6 +19,10 @@ def read_config() -> Config:
     :return: the configuration
     """
     config = Config()
+    config.lat = None
+    config.lon = None
+    config.zip = None
+    config.country = None
     config.padding = None
     config.text_renderer = 'basic'
 
@@ -33,6 +39,10 @@ def read_config() -> Config:
                 config.lat = line[4:].strip()
             elif line.startswith('lon='):
                 config.lon = line[4:].strip()
+            elif line.startswith('zip='):
+                config.zip = line[4:].strip()
+            elif line.startswith('country='):
+                config.country = line[8:].strip()
             elif line.startswith('openweathermap_key='):
                 config.openweathermap_key = line[19:].strip()
             elif line.startswith('refresh_mins='):

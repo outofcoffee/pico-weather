@@ -45,7 +45,10 @@ Exit REPL with `Ctrl-]`
 
 ### Setup
 
-1. Copy `config.txt.example` to `config.txt` and fill in WiFi credentials, location coordinates, and OpenWeather API key
+1. Copy `config.txt.example` to `config.txt` and fill in:
+   - WiFi credentials
+   - Location (either lat/lon coordinates OR zip/postcode and country code)
+   - OpenWeather API key
 2. Ensure MicroPython is installed on the Pico W (firmware files included in repo: `RPI_PICO2_W-20251209-v1.27.0.uf2` and `RPI_PICO_W-20231227-v1.22.0.uf2`)
 
 ## Architecture
@@ -112,6 +115,7 @@ The architecture uses a layered approach separating hardware abstraction (**Scre
 
 **[weather.py](weather.py)** - Weather API integration and caching
 - Fetches from OpenWeather OneCall API 3.0 (returns current + daily forecast)
+- `lookup_geocoding()` converts zip/postcode and country code to lat/lon using OpenWeather Geocoding API
 - Implements file-based caching in `cache/` directory with timestamp validation
 - `Weather` and `Temperature` are simple data classes (no `@dataclass`, manual serialization)
 - Maps weather condition titles to icon names
@@ -137,7 +141,7 @@ The architecture uses a layered approach separating hardware abstraction (**Scre
 ### Data Flow
 
 1. **Initialization**: `read_config()` → `get_epd()` creates `Screen` → wrap in `PaddedScreen` (if configured) → wrap in `BufferedScreen` → `get_font_renderer()` → create `DisplayController`
-2. **Fetch phase**: Check cache → connect to WiFi if needed → call OpenWeather API → parse JSON → disconnect → cache results
+2. **Fetch phase**: Check cache → connect to WiFi if needed → lookup geocoding (if zip/country specified) → call OpenWeather API → parse JSON → disconnect → cache results
 3. **Render phase**: Enable virtual mode → `render()` uses `DisplayController` with render flags → `FontRenderer` renders text → disable virtual mode to flush buffered operations
 4. **Sleep phase**: Deep sleep the display → sleep CPU for `refresh_mins` → loop
 
@@ -145,7 +149,9 @@ The architecture uses a layered approach separating hardware abstraction (**Scre
 
 `config.txt` structure (key=value format):
 - `ssid`, `password` - WiFi credentials
-- `lat`, `lon` - Location coordinates for weather
+- **Location** (specify EITHER lat/lon OR zip/country):
+  - `lat`, `lon` - Direct location coordinates for weather
+  - `zip`, `country` - Zip/postcode and country code (e.g., `zip=E14`, `country=GB`). Automatically geocoded to lat/lon using OpenWeather Geocoding API
 - `openweathermap_key` - API key
 - `refresh_mins` - Main loop sleep duration (how often to update weather)
 - `cache_mins` - How long cached API responses stay valid (reduces API calls)
