@@ -10,7 +10,8 @@ from net import connect_to_network, disconnect
 from display import DisplayController
 from config import read_config
 from weather import Weather, load_cached_weather, fetch_weather, \
-    cache_weather, lookup_geocoding
+    cache_weather
+from geocoding import lookup_geocoding
 
 
 def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]:
@@ -62,7 +63,7 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
                 f"Looking up location..."
             )
             try:
-                lat, lon = lookup_geocoding(config.zip, config.country, config.openweathermap_key)
+                lat, lon = lookup_geocoding(config.zip, config.country, config.openweathermap_key, config.cache_mins)
             except Exception as e:
                 print(f"error during geocoding lookup: {e}")
                 display.display_text(

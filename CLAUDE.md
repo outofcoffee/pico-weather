@@ -115,10 +115,16 @@ The architecture uses a layered approach separating hardware abstraction (**Scre
 
 **[weather.py](weather.py)** - Weather API integration and caching
 - Fetches from OpenWeather OneCall API 3.0 (returns current + daily forecast)
-- `lookup_geocoding()` converts zip/postcode and country code to lat/lon using OpenWeather Geocoding API
 - Implements file-based caching in `cache/` directory with timestamp validation
 - `Weather` and `Temperature` are simple data classes (no `@dataclass`, manual serialization)
 - Maps weather condition titles to icon names
+
+**[geocoding.py](geocoding.py)** - Geocoding API integration and caching
+- `lookup_geocoding()` converts zip/postcode and country code to lat/lon using OpenWeather Geocoding API
+- Implements file-based caching in `cache/` directory (cache key: `{zip}_{country}`)
+- `GeocodingResult` data class stores zip, country, location name, lat, and lon
+- Cache functions: `load_cached_geocoding()`, `cache_geocoding()`, `is_geocoding_cache_valid()`
+- `fetch_geocoding()` performs the actual API call (called by `lookup_geocoding()` on cache miss)
 
 **[net.py](net.py)** - WiFi connection management
 - Simple connect/disconnect functions for `network.WLAN`

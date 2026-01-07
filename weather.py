@@ -81,28 +81,6 @@ def get_img_for_title(title: str) -> str:
     return img_path
 
 
-def lookup_geocoding(zip_code: str, country: str, openweathermap_key: str) -> tuple[str, str]:
-    """
-    Looks up the latitude and longitude for a given zip/postcode and country code
-    using the OpenWeatherMap Geocoding API.
-    :param zip_code: the zip/postcode
-    :param country: the country code (e.g. 'GB', 'US')
-    :param openweathermap_key: the OpenWeatherMap API key
-    :return: tuple of (lat, lon) as strings
-    """
-    url = f"http://api.openweathermap.org/geo/1.0/zip?zip={zip_code},{country}&appid={openweathermap_key}"
-    print(f"geocoding lookup: {url}")
-    r = requests.get(url)
-    resp: dict = r.json()
-    r.close()
-
-    lat = str(resp['lat'])
-    lon = str(resp['lon'])
-    print(f"geocoding result: {resp['name']} ({resp['country']}) -> lat={lat}, lon={lon}")
-
-    return lat, lon
-
-
 def fetch_weather(display: DisplayController, lat: str, lon: str, openweathermap_key: str) -> tuple[Weather, Weather]:
     """
     Fetches the current weather from OpenWeatherMap and returns a tuple
