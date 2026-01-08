@@ -1,7 +1,6 @@
 import urequests as requests
 import json
 import os
-import utime
 
 from utils import dir_exists, file_exists
 
@@ -56,77 +55,54 @@ def ensure_cache_dir():
         os.mkdir(CACHE_DIR)
 
 
-def is_geocoding_cache_valid(zip_code: str, country: str, cache_mins: int) -> bool:
+def is_geocoding_cache_valid(zip_code: str, country: str) -> bool:
     """
-    Checks if the cached geocoding result is still valid
+    Checks if the cached geocoding result exists
     :param zip_code: the zip/postcode
     :param country: the country code
-    :param cache_mins: the cache expiry in minutes
-    :return: True if cache is valid, False otherwise
+    :return: True if cache exists, False otherwise
     """
     ensure_cache_dir()
     cache_key = get_cache_key(zip_code, country)
+    cache_file = f'{CACHE_DIR}/geocoding_{cache_key}.json'
 
-    is_valid: bool
-    timestamp_file = f'{CACHE_DIR}/geocoding_{cache_key}_timestamp'
-    if file_exists(timestamp_file):
-        with open(timestamp_file, 'r') as f:
-            timestamp = int(f.read())
-            age = utime.time() - timestamp
-            print(f"geocoding cache for {cache_key} is {age} seconds old")
-
-            # if age is negative, the device RTC is probably not set
-            is_valid = 0 <= age < (cache_mins * 60)
-
-    else:
-        is_valid = False
-
-    print(f"geocoding cache for {cache_key} is {'valid' if is_valid else 'invalid'} (expiry {cache_mins} mins)")
+    is_valid = file_exists(cache_file)
+    print(f"geocoding cache for {cache_key} {'exists' if is_valid else 'does not exist'}")
     return is_valid
 
 
-def cache_geocoding(result: GeocodingResult, cache_mins: int):
+def cache_geocoding(result: GeocodingResult):
     """
-    Caches the geocoding result
+    Caches the geocoding result permanently (no expiry)
     :param result: the geocoding result
-    :param cache_mins: the cache expiry in minutes (used for logging only)
     """
     ensure_cache_dir()
     cache_key = get_cache_key(result.zip, result.country)
-    print(f"caching geocoding result for {cache_key} (expiry {cache_mins} mins)")
+    print(f"caching geocoding result for {cache_key}")
 
     with open(f'{CACHE_DIR}/geocoding_{cache_key}.json', 'w') as f:
         result_json = json.dumps(result.to_dict())
         f.write(result_json)
 
-    with open(f'{CACHE_DIR}/geocoding_{cache_key}_timestamp', 'w') as f:
-        f.write(str(utime.time()))
 
-
-def load_cached_geocoding(zip_code: str, country: str, cache_mins: int) -> GeocodingResult | None:
+def load_cached_geocoding(zip_code: str, country: str) -> GeocodingResult | None:
     """
-    Loads the cached geocoding result if it exists and is valid
+    Loads the cached geocoding result if it exists
     :param zip_code: the zip/postcode
     :param country: the country code
-    :param cache_mins: the cache expiry in minutes
-    :return: the cached geocoding result, or None if not found or invalid
+    :return: the cached geocoding result, or None if not found
     """
-    if not is_geocoding_cache_valid(zip_code, country, cache_mins):
+    if not is_geocoding_cache_valid(zip_code, country):
         return None
 
-    ensure_cache_dir()
     cache_key = get_cache_key(zip_code, country)
     cache_file = f'{CACHE_DIR}/geocoding_{cache_key}.json'
 
-    if file_exists(cache_file):
-        with open(cache_file, 'r') as f:
-            result_json = f.read()
-            print(f"loaded cached geocoding for {cache_key}: {result_json}")
-            result_dict = json.loads(result_json)
-            return GeocodingResult.from_dict(result_dict)
-    else:
-        print(f"geocoding cache for {cache_key} does not exist")
-        return None
+    with open(cache_file, 'r') as f:
+        result_json = f.read()
+        print(f"loaded cached geocoding for {cache_key}: {result_json}")
+        result_dict = json.loads(result_json)
+        return GeocodingResult.from_dict(result_dict)
 
 
 def fetch_geocoding(zip_code: str, country: str, openweathermap_key: str) -> GeocodingResult:
@@ -152,18 +128,17 @@ def fetch_geocoding(zip_code: str, country: str, openweathermap_key: str) -> Geo
     return GeocodingResult(zip_code, country, name, lat, lon)
 
 
-def lookup_geocoding(zip_code: str, country: str, openweathermap_key: str, cache_mins: int) -> tuple[str, str]:
+def lookup_geocoding(zip_code: str, country: str, openweathermap_key: str) -> tuple[str, str]:
     """
     Looks up the latitude and longitude for a given zip/postcode and country code.
-    First checks the cache, then calls the API if needed.
+    First checks the cache, then calls the API if needed. Results are cached permanently.
     :param zip_code: the zip/postcode
     :param country: the country code (e.g. 'GB', 'US')
     :param openweathermap_key: the OpenWeatherMap API key
-    :param cache_mins: the cache expiry in minutes
     :return: tuple of (lat, lon) as strings
     """
     # Try to load from cache first
-    cached = load_cached_geocoding(zip_code, country, cache_mins)
+    cached = load_cached_geocoding(zip_code, country)
     if cached is not None:
         print(f"using cached geocoding: {cached.name} -> lat={cached.lat}, lon={cached.lon}")
         return cached.lat, cached.lon
@@ -172,7 +147,7 @@ def lookup_geocoding(zip_code: str, country: str, openweathermap_key: str, cache
     print(f"no cached geocoding found; fetching from API")
     result = fetch_geocoding(zip_code, country, openweathermap_key)
 
-    # Cache the result
-    cache_geocoding(result, cache_mins)
+    # Cache the result permanently
+    cache_geocoding(result)
 
     return result.lat, result.lon

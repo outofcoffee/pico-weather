@@ -121,10 +121,11 @@ The architecture uses a layered approach separating hardware abstraction (**Scre
 
 **[geocoding.py](geocoding.py)** - Geocoding API integration and caching
 - `lookup_geocoding()` converts zip/postcode and country code to lat/lon using OpenWeather Geocoding API
-- Implements file-based caching in `cache/` directory (cache key: `{zip}_{country}`)
+- Implements permanent file-based caching in `cache/` directory (cache key: `{zip}_{country}`, no expiry)
 - `GeocodingResult` data class stores zip, country, location name, lat, and lon
 - Cache functions: `load_cached_geocoding()`, `cache_geocoding()`, `is_geocoding_cache_valid()`
 - `fetch_geocoding()` performs the actual API call (called by `lookup_geocoding()` on cache miss)
+- Geocoding results are cached permanently since they don't change over time
 
 **[net.py](net.py)** - WiFi connection management
 - Simple connect/disconnect functions for `network.WLAN`

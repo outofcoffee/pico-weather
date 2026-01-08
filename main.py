@@ -63,7 +63,7 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
                 f"Looking up location..."
             )
             try:
-                lat, lon = lookup_geocoding(config.zip, config.country, config.openweathermap_key, config.cache_mins)
+                lat, lon = lookup_geocoding(config.zip, config.country, config.openweathermap_key)
             except Exception as e:
                 print(f"error during geocoding lookup: {e}")
                 display.display_text(
