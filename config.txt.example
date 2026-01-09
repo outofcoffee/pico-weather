@@ -2,9 +2,15 @@
 ssid=yourssid
 password=yourpassword
 
-# Your location in lat/lon
+# Your location - specify EITHER lat/lon OR zip/country
+# Option 1: Direct coordinates
 lat=50.819767
 lon=3.257726
+
+# Option 2: Zip/postcode and country code (will be geocoded automatically)
+# Uncomment these and comment out lat/lon to use zip-based lookup
+# zip=E14
+# country=GB
 
 # API key for openweathermap
 openweathermap_key=yourapikey

@@ -11,6 +11,61 @@ from display import DisplayController
 from config import read_config
 from weather import Weather, load_cached_weather, fetch_weather, \
     cache_weather
+from geocoding import lookup_geocoding
+
+
+def determine_location(config: Config, display: DisplayController, wlan) -> tuple[str, str]:
+    """
+    Determines the latitude and longitude from config (either direct lat/lon or via geocoding).
+    If unable to determine location, displays error and resets the device.
+    :param config: the configuration
+    :param display: the display controller
+    :param wlan: the network connection (used for cleanup on error)
+    :return: tuple of (lat, lon) as strings
+    """
+    # Check if lat/lon are directly specified in config
+    lat = config.lat
+    lon = config.lon
+
+    if lat is None or lon is None:
+        if config.zip is not None and config.country is not None:
+            # Perform geocoding lookup
+            print(f"performing geocoding lookup for {config.zip}, {config.country}")
+            display.display_text(
+                DisplayController.RENDER_FLAG_FLUSH,
+                FontSize.SMALL,
+                f"Looking up location..."
+            )
+            try:
+                lat, lon = lookup_geocoding(config.zip, config.country, config.openweathermap_key)
+            except Exception as e:
+                print(f"error during geocoding lookup: {e}")
+                display.display_text(
+                    DisplayController.RENDER_FLAG_FLUSH,
+                    FontSize.SMALL,
+                    "Failed to lookup location",
+                    f"Cause: {e}"
+                )
+                display.deep_sleep()
+                disconnect(wlan)
+                utime.sleep(300)
+                machine.reset()
+        else:
+            # Neither lat/lon nor zip/country specified
+            print(f"error: must specify either lat/lon or zip/country in config.txt")
+            display.display_text(
+                DisplayController.RENDER_FLAG_FLUSH,
+                FontSize.SMALL,
+                "Config error:",
+                "Must specify lat/lon",
+                "or zip/country"
+            )
+            display.deep_sleep()
+            disconnect(wlan)
+            utime.sleep(300)
+            machine.reset()
+
+    return lat, lon
 
 
 def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]:
@@ -49,8 +104,11 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
         f"IP: {ip}"
     )
 
+    # Determine lat/lon - either from config or via geocoding lookup
+    lat, lon = determine_location(config, display, wlan)
+
     try:
-        current, daily = fetch_weather(display, config.lat, config.lon, config.openweathermap_key)
+        current, daily = fetch_weather(display, lat, lon, config.openweathermap_key)
     except Exception as e:
         print(f"error fetching weather: {e}")
         display.display_text(
