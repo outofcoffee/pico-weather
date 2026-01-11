@@ -1,8 +1,10 @@
+from net import NetworkManager, connect_to_network
 import urequests as requests
 
 import json
 import os
 import utime
+import machine
 
 from display import DisplayController
 from utils import wrap_text, sentence_join, ensure_suffix, dir_exists, file_exists
@@ -81,7 +83,7 @@ def get_img_for_title(title: str) -> str:
     return img_path
 
 
-def fetch_weather(display: DisplayController, lat: str, lon: str, openweathermap_key: str) -> tuple[Weather, Weather]:
+def fetch_weather(net: NetworkManager, display: DisplayController, lat: str, lon: str, openweathermap_key: str) -> tuple[Weather, Weather]:
     """
     Fetches the current weather from OpenWeatherMap and returns a tuple
     of Weather objects [current, daily]
@@ -90,39 +92,47 @@ def fetch_weather(display: DisplayController, lat: str, lon: str, openweathermap
     :param openweathermap_key: the OpenWeatherMap API key
     :return: the Weather objects
     """
-    # reduce the amount of data returned by excluding minutely, hourly, and alerts
-    exclude = "minutely,hourly,alerts"
+    try: 
+        connect_to_network(net, display)
 
-    url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={openweathermap_key}&exclude={exclude}"
-    print(f"querying {url}")
-    r = requests.get(url)
-    resp: dict = r.json()
-    # print(resp)
-    r.close()
+        # reduce the amount of data returned by excluding minutely, hourly, and alerts
+        exclude = "minutely,hourly,alerts"
 
-    current_conditions = resp['current']
-    dt: int = current_conditions['dt']
+        url = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={openweathermap_key}&exclude={exclude}"
+        print(f"querying {url}")
+        r = requests.get(url)
+        resp: dict = r.json()
+        # print(resp)
+        r.close()
 
-    (current_temp, current_titles, current_desc) = summarise_conditions('current', current_conditions)
-    current = Weather(dt, current_temp, current_titles, current_desc, [])
+        current_conditions = resp['current']
+        dt: int = current_conditions['dt']
 
-    daily_conditions = resp['daily']
+        (current_temp, current_titles, current_desc) = summarise_conditions('current', current_conditions)
+        current = Weather(dt, current_temp, current_titles, current_desc, [])
 
-    # multiple daily forecasts; first element is today
-    if len(daily_conditions) > 0:
-        today_conditions = daily_conditions[0]
-        (daily_temp, daily_titles, daily_desc) = summarise_conditions('daily', today_conditions)
+        daily_conditions = resp['daily']
 
-        today_summary = ensure_suffix(today_conditions['summary'], ".")
-        day_summary = wrap_text(today_summary, display.get_max_line_length())
-        daily = Weather(dt, daily_temp, daily_titles, daily_desc, day_summary)
+        # multiple daily forecasts; first element is today
+        if len(daily_conditions) > 0:
+            today_conditions = daily_conditions[0]
+            (daily_temp, daily_titles, daily_desc) = summarise_conditions('daily', today_conditions)
 
-    else:
-        print(f"no daily weather returned")
-        daily = Weather(dt, Temperature(0, 0, 0), [], "", [])
+            today_summary = ensure_suffix(today_conditions['summary'], ".")
+            day_summary = wrap_text(today_summary, display.get_max_line_length())
+            daily = Weather(dt, daily_temp, daily_titles, daily_desc, day_summary)
 
-    return current, daily
+        else:
+            print(f"no daily weather returned")
+            daily = Weather(dt, Temperature(0, 0, 0), [], "", [])
 
+        return current, daily
+    
+    except KeyboardInterrupt:
+        print('received keyboard interrupt when connecting to network')
+        machine.reset()
+    finally:
+        net.return_net()
 
 def summarise_conditions(weather_timeframe, conditions) -> tuple[Temperature, list[str], str]:
     """

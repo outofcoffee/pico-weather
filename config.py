@@ -9,6 +9,7 @@ class Config:
     display_size: str
     padding: tuple[int, int, int, int] | None
     text_renderer: str
+    server: bool
 
 
 def read_config() -> Config:
@@ -19,6 +20,7 @@ def read_config() -> Config:
     config = Config()
     config.padding = None
     config.text_renderer = 'basic'
+    config.server = False
 
     with open('config.txt') as f:
         for line in f:
@@ -48,5 +50,7 @@ def read_config() -> Config:
                     config.padding = (int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]))
             elif line.startswith('text_renderer='):
                 config.text_renderer = line[14:].strip()
+            elif line.startswith('server='):
+                config.server = bool(line[7:].strip())
 
     return config

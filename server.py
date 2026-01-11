@@ -1,9 +1,14 @@
-import network
+from display import DisplayController
+from font_renderer import FontSize
+from net import NetworkManager, connect_to_network
+import machine
 from lib import tinyweb
 
-def start_server(wlan: network.WLAN):
-    ip = wlan.ifconfig()[0]
-
+def start_server(net: NetworkManager, display: DisplayController):
+    # there's no corresponding net.return_net() call
+    # because the connection has to stay up
+    ip = connect_to_network(net, display)
+    
     app = tinyweb.webserver()
 
     # Index page

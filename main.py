@@ -1,5 +1,6 @@
 from config import Config
 from render import render
+from screen import Screen
 from screen_buffered import BufferedScreen
 import machine
 import utime
@@ -7,14 +8,14 @@ import uasyncio as asyncio
 
 from display import get_epd
 from font_renderer import FontSize, get_font_renderer
-from net import connect_to_network, disconnect
+from net import NetworkManager
 from display import DisplayController
 from config import read_config
 from weather import Weather, load_cached_weather, fetch_weather, \
     cache_weather
+from server import start_server
 
-
-def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]:
+def fetch(config: Config, net: NetworkManager, display: DisplayController) -> tuple[Weather, Weather]:
     """
     First tries to load the weather from the cache. If it's not there, connects to the configured network, fetches the
     weather, disconnects, and caches the weather.
@@ -32,7 +33,7 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
         print(f"no cached weather found; fetching from remote")
 
     try:
-        current, daily = fetch_weather(display, config.lat, config.lon, config.openweathermap_key)
+        current, daily = fetch_weather(net, display, config.lat, config.lon, config.openweathermap_key)
     except Exception as e:
         print(f"error fetching weather: {e}")
         display.display_text(
@@ -54,10 +55,10 @@ def fetch(config: Config, display: DisplayController) -> tuple[Weather, Weather]
     return current, daily
 
 
-async def weather_update_loop(config, display, epd):
+async def weather_update_loop(config: Config, net: NetworkManager, display: DisplayController, epd: BufferedScreen):
     """Background coroutine that periodically updates weather display"""
     while True:
-        current, daily = fetch(config, display)
+        current, daily = fetch(config, net, display)
         render(display, current, daily)
 
         # flush the display
@@ -75,18 +76,20 @@ async def weather_update_loop(config, display, epd):
         epd.set_virtual_mode(True)
 
 
-async def main_async(config, display, epd, wlan):
+async def main_async(config: Config, display: DisplayController, epd: BufferedScreen, net: NetworkManager):
     """Main async function that starts both weather updates and HTTP server"""
-    # Start the HTTP server (registers task with event loop)
-    from server import start_server
-    start_server(wlan)
+
+    if config.server:
+        # Start the HTTP server (registers task with event loop)
+        start_server(net, display)
 
     # Start the weather update loop as a background task
-    asyncio.create_task(weather_update_loop(config, display, epd))
+    asyncio.create_task(weather_update_loop(config, net, display, epd))
 
 
 def main():
     config = read_config()
+    net = NetworkManager(config)
 
     phy_epd = get_epd(config)
     epd = BufferedScreen(phy_epd, virtual_mode=True)
@@ -96,34 +99,15 @@ def main():
     display = DisplayController(epd, font_renderer)
     display.init()
 
-    epd.init() 
-
-    display.display_text(
-        DisplayController.RENDER_FLAG_BLANK | DisplayController.RENDER_FLAG_FLUSH,
-        FontSize.SMALL,
-        f"Connecting to {config.ssid}..."
-    )
-
-    try:
-        wlan, ip = connect_to_network(config.ssid, config.password)
-    except KeyboardInterrupt:
-        print('received keyboard interrupt when connecting to network')
-        machine.reset()
-
-    display.display_text(
-        DisplayController.RENDER_FLAG_FLUSH,
-        FontSize.SMALL,
-        "Connected",
-        f"IP: {ip}"
-    )
+    epd.init()
 
     loop = asyncio.get_event_loop()
-    loop.create_task(main_async(config, display, epd, wlan))
+    loop.create_task(main_async(config, display, epd, net))
     try:
         loop.run_forever()
     except KeyboardInterrupt:
         print('received keyboard interrupt, disconnecting...')
-        disconnect(wlan)
+        net.shut_down()
         machine.reset()
 
 

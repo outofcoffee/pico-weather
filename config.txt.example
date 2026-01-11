@@ -25,3 +25,7 @@ display_size=small
 # Optional: Display padding in pixels (top,right,bottom,left)
 # If not specified, defaults to (0,2,0,0) i.e. small right margin
 # padding=10,10,10,10
+
+# Optional: Enable web server for remote admin
+# If not specified, defaults to false
+# server=true
