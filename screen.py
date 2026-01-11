@@ -29,7 +29,7 @@ class Screen:
         """Initializes the display hardware."""
         raise NotImplementedError
 
-    def Clear(self) -> None:
+    def clear(self) -> None:
         """Clears the display buffer."""
         raise NotImplementedError
 
@@ -89,7 +89,7 @@ class EPD_7in5_B_Wrapper(Screen):
     def init(self):
         self._epd.init()
 
-    def Clear(self):
+    def clear(self):
         self._epd.ClearBlack()
 
     def display(self):
@@ -139,7 +139,7 @@ class EPD_2in13_V3_Wrapper(Screen):
     def init(self):
         self._epd.init()
 
-    def Clear(self):
+    def clear(self):
         self._epd.Clear()
 
     def display(self):

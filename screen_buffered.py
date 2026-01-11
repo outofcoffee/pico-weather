@@ -117,7 +117,7 @@ class BufferedScreen(Screen):
         """Initializes the display hardware."""
         self._wrapped.init()
 
-    def Clear(self) -> None:
+    def clear(self) -> None:
         """
         Clears the display buffer.
 
@@ -128,7 +128,7 @@ class BufferedScreen(Screen):
             # Clear all previous buffered operations
             self._buffered_ops = [('clear',)]
         else:
-            self._wrapped.Clear()
+            self._wrapped.clear()
 
     def display(self) -> None:
         """

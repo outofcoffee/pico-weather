@@ -56,7 +56,7 @@ class DisplayController:
         Displays the given lines of text at specified coordinates.
         """
         if render_flags & self.RENDER_FLAG_CLEAR:
-            self.epd.Clear()
+            self.epd.clear()
         if render_flags & self.RENDER_FLAG_BLANK:
             self.epd.fill(0xff)
             self.last_text_y = self.epd.draw_start_y

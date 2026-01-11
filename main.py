@@ -100,6 +100,7 @@ def main():
     display.init()
 
     epd.init()
+    epd.clear()
 
     loop = asyncio.get_event_loop()
     loop.create_task(main_async(config, display, epd, net))

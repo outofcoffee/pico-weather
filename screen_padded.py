@@ -85,9 +85,9 @@ class PaddedScreen(Screen):
         """Initializes the display hardware."""
         self._wrapped.init()
 
-    def Clear(self) -> None:
+    def clear(self) -> None:
         """Clears the display buffer."""
-        self._wrapped.Clear()
+        self._wrapped.clear()
 
     def display(self) -> None:
         """Flushes the buffer to the display."""
