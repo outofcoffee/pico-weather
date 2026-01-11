@@ -10,6 +10,7 @@ class Config:
     padding: tuple[int, int, int, int] | None
     text_renderer: str
     server: bool
+    listen_port: int
 
 
 def read_config() -> Config:
@@ -21,6 +22,7 @@ def read_config() -> Config:
     config.padding = None
     config.text_renderer = 'basic'
     config.server = False
+    config.listen_port = 80
 
     with open('config.txt') as f:
         for line in f:
@@ -52,5 +54,7 @@ def read_config() -> Config:
                 config.text_renderer = line[14:].strip()
             elif line.startswith('server='):
                 config.server = bool(line[7:].strip())
+            elif line.startswith('listen_port='):
+                config.listen_port = int(line[12:].strip())
 
     return config

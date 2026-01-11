@@ -81,7 +81,7 @@ async def main_async(config: Config, display: DisplayController, epd: BufferedSc
 
     if config.server:
         # Start the HTTP server (registers task with event loop)
-        start_server(net, display)
+        start_server(config, net, display)
 
     # Start the weather update loop as a background task
     asyncio.create_task(weather_update_loop(config, net, display, epd))

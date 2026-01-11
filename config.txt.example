@@ -29,3 +29,7 @@ display_size=small
 # Optional: Enable web server for remote admin
 # If not specified, defaults to false
 # server=true
+
+# Optional: Port for web server to listen on
+# If not specified, defaults to 80
+# listen_port=8080
