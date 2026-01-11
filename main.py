@@ -58,6 +58,9 @@ def fetch(config: Config, net: NetworkManager, display: DisplayController) -> tu
 async def weather_update_loop(config: Config, net: NetworkManager, display: DisplayController, epd: BufferedScreen):
     """Background coroutine that periodically updates weather display"""
     while True:
+        # buffer writes to the display
+        epd.set_virtual_mode(True)
+
         current, daily = fetch(config, net, display)
         render(display, current, daily)
 
@@ -72,19 +75,16 @@ async def weather_update_loop(config: Config, net: NetworkManager, display: Disp
         # we need to re-init after deep sleep
         epd.init()
 
-        # buffer writes to the display
-        epd.set_virtual_mode(True)
-
 
 async def main_async(config: Config, display: DisplayController, epd: BufferedScreen, net: NetworkManager):
     """Main async function that starts both weather updates and HTTP server"""
 
+    # Start the weather update loop as a background task
+    asyncio.create_task(weather_update_loop(config, net, display, epd))
+
     if config.server:
         # Start the HTTP server (registers task with event loop)
         start_server(config, net, display)
-
-    # Start the weather update loop as a background task
-    asyncio.create_task(weather_update_loop(config, net, display, epd))
 
 
 def main():
@@ -92,7 +92,7 @@ def main():
     net = NetworkManager(config)
 
     phy_epd = get_epd(config)
-    epd = BufferedScreen(phy_epd, virtual_mode=True)
+    epd = BufferedScreen(phy_epd, virtual_mode=False)
 
     font_renderer = get_font_renderer(config, epd)
 
@@ -101,6 +101,9 @@ def main():
 
     epd.init()
     epd.clear()
+
+    # buffer writes to the display
+    epd.set_virtual_mode(True)
 
     loop = asyncio.get_event_loop()
     loop.create_task(main_async(config, display, epd, net))
